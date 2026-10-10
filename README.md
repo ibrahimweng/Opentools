@@ -80,7 +80,6 @@ The site is static, so any host works. With Vercel:
 
 Every push to the default branch then goes live on its own.
 
-Once the domain is live, make the share image absolute in `index.html` so every
-network can find it. Change both `content="assets/og.png"` lines to
-`content="https://yourdomain.com/assets/og.png"`, and add
-`<link rel="canonical" href="https://yourdomain.com/">`.
+The site lives at **https://www.opentools.art**, with `opentools.art`
+redirecting there. `index.html` names that address in its canonical link and
+share tags, so if the domain ever changes, change it there too.
