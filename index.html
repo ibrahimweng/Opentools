@@ -1,0 +1,141 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Opentools</title>
+  <meta name="description" content="Opentools makes focused tools for designers: a font editor, an ideation board, 3D mockups, a parametric icon library, brand patterns, sound for video and brand handover.">
+  <meta name="theme-color" content="#000000">
+  <meta name="color-scheme" content="dark">
+
+  <!-- Share previews. Once the domain is live, make og:image absolute,
+       e.g. https://yourdomain.com/assets/og.png, and add a canonical link. -->
+  <meta property="og:type" content="website">
+  <meta property="og:title" content="Opentools">
+  <meta property="og:description" content="Focused tools for designers. Most of them run entirely in your browser.">
+  <meta property="og:image" content="assets/og.png">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="Opentools">
+  <meta name="twitter:description" content="Focused tools for designers. Most of them run entirely in your browser.">
+  <meta name="twitter:image" content="assets/og.png">
+
+  <link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500&display=swap">
+  <!-- Only the two letters the Typeforge preview sets. -->
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,100..900&text=Ag&display=block">
+  <link rel="stylesheet" href="assets/css/site.css">
+
+  <script defer src="assets/js/tools.js"></script>
+  <script defer src="assets/js/previews.js"></script>
+  <script defer src="assets/js/site.js"></script>
+</head>
+<body>
+  <a class="skip" href="#tools">Skip to the tools</a>
+
+  <main id="top">
+    <section class="hero" aria-label="Featured tool">
+      <div class="hero-stage" data-hero></div>
+      <div class="hero-caption">
+        <button type="button" class="caption hero-link" data-hero-link>
+          <span class="caption-name" data-hero-name></span>
+          <span class="caption-tag" data-hero-tag></span>
+        </button>
+        <span class="hero-count" data-hero-count aria-hidden="true"></span>
+      </div>
+    </section>
+
+    <div class="col intro">
+      <h1 class="label">Opentools</h1>
+      <div class="indent">
+        <p>makes focused tools for designers — for type, ideas, mockups, icons, patterns, sound and brand handover. Most of them run entirely in your browser.</p>
+      </div>
+    </div>
+
+    <section id="tools" class="tools" aria-label="Tools">
+      <div class="grid" data-grid></div>
+    </section>
+
+    <div class="col">
+      <section id="index" aria-labelledby="index-label">
+        <h2 class="label" id="index-label">Index</h2>
+        <ul class="indent people" data-index></ul>
+      </section>
+
+      <aside class="note">
+        <p>Every tool here is free to use and built in the open. Found a bug, or have an idea for the next one? <a href="https://github.com/ibrahimweng" target="_blank" rel="noopener" data-github>Open an issue on GitHub</a>.</p>
+        <p>New tools land here first.</p>
+      </aside>
+
+      <section id="about" aria-labelledby="about-label">
+        <h2 class="label" id="about-label">About</h2>
+        <div class="indent">
+          <p class="dim">Not a subscription.</p>
+          <p>Opentools is a growing shelf of tools for the parts of design work that eat the most hours: drawing type, collecting ideas, staging mockups, building icon sets, finding a brand’s patterns, scoring sound to picture and packaging a brand for handover.</p>
+          <p>Most of them run entirely in your browser. Your fonts, screenshots and recordings are read on your own machine and never uploaded, and there is no account to make.</p>
+          <p>Each one is a single tool that does its job thoroughly, documented as plainly as it is designed.</p>
+        </div>
+      </section>
+    </div>
+  </main>
+
+  <nav class="nav" aria-label="Site">
+    <div class="nav-row nav-row--tools" data-nav-tools></div>
+    <div class="nav-row">
+      <a href="#top" class="nav-link" data-spy="top">Opentools</a>
+      <a href="#tools" class="nav-link" data-spy="tools">Tools</a>
+      <a href="#index" class="nav-link" data-spy="index">Index</a>
+      <a href="#about" class="nav-link" data-spy="about">About</a>
+      <a href="https://github.com/ibrahimweng" class="nav-link nav-end" target="_blank" rel="noopener" data-github>GitHub</a>
+    </div>
+  </nav>
+
+  <dialog class="modal" data-modal aria-labelledby="m-name">
+    <div class="modal-scrim" data-close></div>
+    <div class="modal-panel" tabindex="-1" autofocus>
+      <header class="m-head">
+        <p class="caption m-title">
+          <span class="caption-name" id="m-name" data-m="name"></span>
+          <span class="caption-tag" data-m="tagline"></span>
+        </p>
+        <span class="m-count" data-m="count"></span>
+        <button type="button" class="m-close" data-close>Close</button>
+      </header>
+
+      <div class="m-scroll" data-m="scroll">
+        <div class="m-content" data-m="content">
+          <div class="m-media" data-m="media"></div>
+          <div class="m-body">
+            <div class="m-main">
+              <p class="label">About</p>
+              <div class="indent">
+                <p class="dim" data-m="lead"></p>
+                <div data-m="about"></div>
+              </div>
+              <p class="label">What it does</p>
+              <ul class="indent people" data-m="features"></ul>
+            </div>
+            <dl class="m-meta">
+              <div><dt>Category</dt><dd data-m="category"></dd></div>
+              <div><dt>Runs</dt><dd data-m="runs"></dd></div>
+              <div><dt>Built with</dt><dd data-m="stack"></dd></div>
+              <div data-m="source-row"><dt>Source</dt><dd><a data-m="source" target="_blank" rel="noopener">GitHub ↗</a></dd></div>
+            </dl>
+          </div>
+        </div>
+      </div>
+
+      <footer class="m-foot">
+        <button type="button" class="m-step" data-step="-1"><span aria-hidden="true">←</span> <span data-m="prev"></span></button>
+        <button type="button" class="m-step m-step--next" data-step="1"><span data-m="next"></span> <span aria-hidden="true">→</span></button>
+        <a class="m-visit" data-m="visit" target="_blank" rel="noopener">Visit site <span aria-hidden="true">↗</span></a>
+      </footer>
+    </div>
+  </dialog>
+
+  <noscript>
+    <p class="col noscript">This page lists its tools with JavaScript. The source for each is at <a href="https://github.com/ibrahimweng">github.com/ibrahimweng</a>.</p>
+  </noscript>
+</body>
+</html>
