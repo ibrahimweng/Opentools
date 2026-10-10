@@ -5,7 +5,7 @@
  *
  *   url     The tool's live website. "Visit site" opens it in a new tab.
  *           Left empty, the button reads "Live link soon" and does nothing.
- *   video   A demo video for the pop-up and the grid tile, e.g.
+ *   video   A demo video for the tool's card on the spiral and its pop-up, e.g.
  *           'media/typeforge.mp4'. Left empty, the tool's animated preview
  *           plays in its place. See media/README.md.
  *   poster  Optional still shown while the video loads, e.g.
@@ -13,15 +13,12 @@
  *   source  The public repository, shown as "Source" in the pop-up.
  *           Set it to '' to hide the link.
  *
- * Tools appear in the order they are listed. The first one is shown large.
+ * Tools appear on the spiral and in the index in the order they are listed.
  */
 window.OPENTOOLS = {
   site: {
     name: 'Opentools',
     github: 'https://github.com/ibrahimweng',
-    // A showreel for the top of the page, e.g. 'media/reel.mp4'. Left empty,
-    // the hero cycles through each tool's preview instead.
-    reel: '',
   },
 
   tools: [

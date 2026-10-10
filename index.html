@@ -32,32 +32,28 @@
   <script defer src="assets/js/site.js"></script>
 </head>
 <body>
-  <a class="skip" href="#tools">Skip to the tools</a>
+  <a class="skip" href="#index">Skip to the list of tools</a>
 
-  <main id="top">
-    <section class="hero" aria-label="Featured tool">
-      <div class="hero-stage" data-hero></div>
-      <div class="hero-caption">
-        <button type="button" class="caption hero-link" data-hero-link>
-          <span class="caption-name" data-hero-name></span>
-          <span class="caption-tag" data-hero-tag></span>
-        </button>
-        <span class="hero-count" data-hero-count aria-hidden="true"></span>
+  <main>
+    <!-- Every tool on a turning spiral. Drag to spin it, click a card to open it. -->
+    <section class="hero" aria-label="Tools">
+      <div class="spiral" data-spiral>
+        <div class="spiral-stage" data-spiral-stage></div>
       </div>
-    </section>
-
-    <div class="col intro">
-      <h1 class="label">Opentools</h1>
-      <div class="indent">
-        <p>makes focused tools for designers — for type, ideas, mockups, icons, patterns, sound and brand handover. Most of them run entirely in your browser.</p>
-      </div>
-    </div>
-
-    <section id="tools" class="tools" aria-label="Tools">
-      <div class="grid" data-grid></div>
+      <p class="spiral-label caption" data-spiral-label aria-hidden="true">
+        <span class="caption-name" data-spiral-name></span>
+        <span class="caption-tag" data-spiral-tag></span>
+      </p>
     </section>
 
     <div class="col">
+      <section aria-labelledby="site-name">
+        <h1 class="label" id="site-name">Opentools</h1>
+        <div class="indent">
+          <p>makes focused tools for designers — for type, ideas, mockups, icons, patterns, sound and brand handover.</p>
+        </div>
+      </section>
+
       <section id="index" aria-labelledby="index-label">
         <h2 class="label" id="index-label">Index</h2>
         <ul class="indent people" data-index></ul>
@@ -65,31 +61,18 @@
 
       <aside class="note">
         <p>Every tool here is free to use and built in the open. Found a bug, or have an idea for the next one? <a href="https://github.com/ibrahimweng" target="_blank" rel="noopener" data-github>Open an issue on GitHub</a>.</p>
-        <p>New tools land here first.</p>
       </aside>
 
       <section id="about" aria-labelledby="about-label">
         <h2 class="label" id="about-label">About</h2>
         <div class="indent">
           <p class="dim">Not a subscription.</p>
-          <p>Opentools is a growing shelf of tools for the parts of design work that eat the most hours: drawing type, collecting ideas, staging mockups, building icon sets, finding a brand’s patterns, scoring sound to picture and packaging a brand for handover.</p>
-          <p>Most of them run entirely in your browser. Your fonts, screenshots and recordings are read on your own machine and never uploaded, and there is no account to make.</p>
-          <p>Each one is a single tool that does its job thoroughly, documented as plainly as it is designed.</p>
+          <p>Most of these tools run entirely in your browser. Fonts, screenshots and recordings are read on your own machine and never uploaded, and there is no account to make.</p>
+          <p>Each one does a single job thoroughly, and is documented as plainly as it is designed.</p>
         </div>
       </section>
     </div>
   </main>
-
-  <nav class="nav" aria-label="Site">
-    <div class="nav-row nav-row--tools" data-nav-tools></div>
-    <div class="nav-row">
-      <a href="#top" class="nav-link" data-spy="top">Opentools</a>
-      <a href="#tools" class="nav-link" data-spy="tools">Tools</a>
-      <a href="#index" class="nav-link" data-spy="index">Index</a>
-      <a href="#about" class="nav-link" data-spy="about">About</a>
-      <a href="https://github.com/ibrahimweng" class="nav-link nav-end" target="_blank" rel="noopener" data-github>GitHub</a>
-    </div>
-  </nav>
 
   <dialog class="modal" data-modal aria-labelledby="m-name">
     <div class="modal-scrim" data-close></div>
@@ -108,7 +91,7 @@
           <div class="m-media" data-m="media"></div>
           <div class="m-body">
             <div class="m-main">
-              <p class="label">About</p>
+              <p class="label">Overview</p>
               <div class="indent">
                 <p class="dim" data-m="lead"></p>
                 <div data-m="about"></div>

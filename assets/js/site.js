@@ -71,8 +71,8 @@
     if (document.hidden) return false;
     var inModal = !!node.closest('.modal');
     if (modalOpen !== inModal) return false;
-    var slide = node.closest('.hero-slide');
-    if (slide && !slide.classList.contains('is-active')) return false;
+    var card = node.closest('.card');
+    if (card && card.getAttribute('data-front') !== '1') return false;
     if (reduced.matches && node.classList.contains('pv')) return false;
     return true;
   }
@@ -132,24 +132,7 @@
   document.addEventListener('visibilitychange', refresh);
   if (reduced.addEventListener) reduced.addEventListener('change', refresh);
 
-  /* Grid, index and the tool row of the navigation ---------------------- */
-
-  var grid = $('[data-grid]');
-  grid.innerHTML =
-    tools
-      .map(function (t, i) {
-        return (
-          '<a class="tile' + (i === 0 ? ' tile--wide' : '') + '" href="#' + esc(t.slug) + '" data-open="' + esc(t.slug) + '">' +
-          '<span class="tile-media">' + media(t) + '</span>' +
-          '<span class="caption"><span class="caption-name">' + esc(t.name) + '</span><span class="caption-tag">' + esc(t.tagline) + '</span></span>' +
-          '</a>'
-        );
-      })
-      .join('') +
-    '<a class="tile tile--soon" href="' + esc(site.github) + '" target="_blank" rel="noopener">' +
-    '<span class="tile-media"><span class="soon"><span class="soon-plus" aria-hidden="true"></span><span>In the workshop</span></span></span>' +
-    '<span class="caption"><span class="caption-name">More</span><span class="caption-tag">New tools land here first.</span></span>' +
-    '</a>';
+  /* Index ---------------------------------------------------------------- */
 
   $('[data-index]').innerHTML = tools
     .map(function (t) {
@@ -162,94 +145,199 @@
     })
     .join('');
 
-  $('[data-nav-tools]').innerHTML = tools
-    .map(function (t) {
-      return '<a class="nav-link" href="#' + esc(t.slug) + '" data-open="' + esc(t.slug) + '">' + esc(t.name) + '</a>';
+  /* Spiral ---------------------------------------------------------------
+     Every tool as a card on a helix. The cards climb it and turn as they
+     go, fading out at the top as they come back in at the bottom. Hovering
+     slows it, dragging spins it, and clicking a card opens it. */
+
+  var spiral = $('[data-spiral]');
+  var stage = $('[data-spiral-stage]');
+  var label = $('[data-spiral-label]');
+  var N = tools.length;
+  var TURNS = 1.5;
+  var STEP = (360 * TURNS) / N; // degrees between neighbours
+  var SPEED = 1 / 3.2; // cards a second
+  var geo = { R: 200, dy: 50, perCard: 280 };
+  var t = N / 2; // the first tool starts facing the viewer
+  var v = reduced.matches ? 0 : SPEED;
+  var hovered = null;
+  var drag = null;
+  var dragged = false;
+  var spiralVisible = true;
+  var raf = 0;
+  var last = 0;
+
+  stage.innerHTML = tools
+    .map(function (tool, i) {
+      return (
+        '<button type="button" class="card" data-i="' + i + '" data-open="' + esc(tool.slug) + '" aria-label="Open ' + esc(tool.name) + '">' +
+        '<span class="card-face card-front"><span class="card-media">' + media(tool) + '</span><span class="card-shade"></span></span>' +
+        '<span class="card-face card-back"><span>' + esc(tool.name) + '</span></span>' +
+        '</button>'
+      );
     })
     .join('');
+  var cards = $$('.card', stage);
+  var shades = cards.map(function (c) {
+    return $('.card-shade', c);
+  });
 
-  track(grid);
-
-  /* Hero ----------------------------------------------------------------
-     A showreel when one is set, otherwise each tool in turn. */
-
-  var hero = $('[data-hero]');
-  var heroName = $('[data-hero-name]');
-  var heroTag = $('[data-hero-tag]');
-  var heroCount = $('[data-hero-count]');
-  var heroLink = $('[data-hero-link]');
-  var heroAt = 0;
-  var heroTimer = null;
-  var HERO_DWELL = 6000;
-
-  if (site.reel) {
-    hero.innerHTML = '<div class="hero-slide is-active"><video src="' + esc(site.reel) + '" muted loop playsinline autoplay preload="auto"></video></div>';
-    heroName.textContent = site.name;
-    heroTag.textContent = 'Focused tools for designers.';
-    heroLink.addEventListener('click', function () {
-      $('#tools').scrollIntoView();
-    });
-    hero.addEventListener('click', function () {
-      $('#tools').scrollIntoView();
-    });
-  } else {
-    hero.innerHTML = tools
-      .map(function (t, i) {
-        return '<div class="hero-slide' + (i === 0 ? ' is-active' : '') + '">' + media(t) + '</div>';
-      })
-      .join('');
-
-    var showHero = function (i) {
-      heroAt = (i + tools.length) % tools.length;
-      $$('.hero-slide', hero).forEach(function (s, j) {
-        s.classList.toggle('is-active', j === heroAt);
-      });
-      var t = tools[heroAt];
-      heroName.textContent = t.name;
-      heroTag.textContent = t.tagline;
-      heroCount.textContent = pad(heroAt + 1) + ' / ' + pad(tools.length);
-      heroLink.setAttribute('aria-label', 'Open ' + t.name);
-      refresh();
-    };
-
-    var heroVisible = true;
-    var scheduleHero = function () {
-      clearTimeout(heroTimer);
-      if (reduced.matches || tools.length < 2) return;
-      heroTimer = setTimeout(function () {
-        if (heroVisible && !modalOpen && !document.hidden) showHero(heroAt + 1);
-        scheduleHero();
-      }, HERO_DWELL);
-    };
-
-    if (io) {
-      new IntersectionObserver(function (e) {
-        heroVisible = e[0].isIntersecting;
-      }).observe(hero);
-    }
-
-    var openHero = function () {
-      open(heroAt);
-    };
-    hero.addEventListener('click', openHero);
-    heroLink.addEventListener('click', openHero);
-
-    // In a frame wider than a preview, fit the drawing to the height and let
-    // its background run out to the sides, rather than blowing it up.
-    var fitHero = function () {
-      var wide = hero.clientWidth / Math.max(1, hero.clientHeight) > 1.6;
-      $$('.pv-svg', hero).forEach(function (s) {
-        s.setAttribute('preserveAspectRatio', wide ? 'xMidYMid meet' : 'xMidYMid slice');
-      });
-    };
-    window.addEventListener('resize', fitHero);
-    fitHero();
-
-    showHero(0);
-    scheduleHero();
+  // Sized to the space the reference gives its object: 420 px square, or
+  // about three quarters of a phone's width. The radius is kept wide enough
+  // that neighbouring cards never cut through one another.
+  function measure() {
+    var vw = document.documentElement.clientWidth;
+    var S = Math.min(420, vw * 0.733);
+    var k = (0.5 / Math.tan((STEP / 2) * (Math.PI / 180))) * 1.06;
+    var cw = Math.min(S * 0.6, (vw - 24) / (1 + 2 * k));
+    var ch = cw * 0.625;
+    geo.R = Math.min(Math.max(S * 0.5, k * cw), (vw - 24 - cw) / 2);
+    geo.dy = Math.min(S * 0.15, (spiral.clientHeight - ch - 40) / N);
+    geo.perCard = Math.max(120, geo.R * STEP * (Math.PI / 180));
+    spiral.style.setProperty('--cw', cw.toFixed(1) + 'px');
+    spiral.style.setProperty('--ch', ch.toFixed(1) + 'px');
+    spiral.style.setProperty('--persp', Math.round(S * 4.2) + 'px');
   }
 
-  track(hero);
+  function place() {
+    for (var i = 0; i < N; i++) {
+      var s = (((i + t) % N) + N) % N;
+      var a = (s - N / 2) * STEP;
+      var y = (N / 2 - s) * geo.dy;
+      var facing = Math.cos(a * (Math.PI / 180));
+      var fade = Math.max(0, Math.min(1, Math.min(s, N - s) / 0.8));
+      var c = cards[i];
+      c.style.transform = 'translate3d(0,' + y.toFixed(2) + 'px,0) rotateY(' + a.toFixed(2) + 'deg) translateZ(' + geo.R.toFixed(1) + 'px)';
+      c.style.setProperty('--fade', fade.toFixed(3));
+      c.style.pointerEvents = fade < 0.35 ? 'none' : '';
+      shades[i].style.opacity = Math.min(0.75, (1 - facing) * 0.55).toFixed(3);
+      var front = facing > 0.05 && fade > 0.3 ? '1' : '0';
+      if (c.getAttribute('data-front') !== front) {
+        c.setAttribute('data-front', front);
+        $$('.pv, video', c).forEach(apply);
+      }
+    }
+  }
+
+  function frame(now) {
+    raf = 0;
+    var dt = last ? Math.min(0.05, (now - last) / 1000) : 0;
+    last = now;
+    if (!drag) {
+      var target = reduced.matches ? 0 : hovered !== null ? SPEED * 0.12 : SPEED;
+      // Ease back to cruising speed; a flick from a drag decays into it.
+      v += (target - v) * Math.min(1, dt * (Math.abs(v) > SPEED * 1.5 ? 1.6 : 3));
+      t += v * dt;
+    }
+    place();
+    if (reduced.matches && !drag && Math.abs(v) < 0.002) {
+      last = 0;
+      return;
+    }
+    run();
+  }
+
+  function run() {
+    if (raf || !spiralVisible || modalOpen || document.hidden) {
+      if (!raf) last = 0;
+      return;
+    }
+    raf = requestAnimationFrame(frame);
+  }
+
+  function showLabel(i) {
+    hovered = i;
+    if (i === null) {
+      label.classList.remove('is-on');
+      return;
+    }
+    $('[data-spiral-name]').textContent = tools[i].name;
+    $('[data-spiral-tag]').textContent = tools[i].tagline;
+    label.classList.add('is-on');
+  }
+
+  cards.forEach(function (c, i) {
+    c.addEventListener('pointerenter', function (e) {
+      if (e.pointerType !== 'touch') showLabel(i);
+    });
+    c.addEventListener('pointerleave', function () {
+      if (hovered === i) showLabel(null);
+    });
+    c.addEventListener('focus', function () {
+      showLabel(i);
+    });
+    c.addEventListener('blur', function () {
+      if (hovered === i) showLabel(null);
+    });
+  });
+
+  // Drag sideways to spin. Vertical moves are left to the page, so the
+  // spiral never traps a scroll on a phone.
+  spiral.addEventListener('pointerdown', function (e) {
+    if (e.button !== 0) return;
+    drag = { x: e.clientX, t: t, lastX: e.clientX, lastT: performance.now(), vel: 0, id: e.pointerId, moved: false };
+    dragged = false;
+  });
+
+  window.addEventListener('pointermove', function (e) {
+    if (!drag || e.pointerId !== drag.id) return;
+    var dx = e.clientX - drag.x;
+    if (!drag.moved && Math.abs(dx) > 6) {
+      drag.moved = true;
+      spiral.classList.add('is-dragging');
+    }
+    if (!drag.moved) return;
+    t = drag.t + dx / geo.perCard;
+    var now = performance.now();
+    var dts = Math.max(1, now - drag.lastT) / 1000;
+    drag.vel = ((e.clientX - drag.lastX) / geo.perCard) / dts;
+    drag.lastX = e.clientX;
+    drag.lastT = now;
+    if (!raf) place();
+  });
+
+  function endDrag(e) {
+    if (!drag || (e && e.pointerId !== drag.id)) return;
+    if (drag.moved) {
+      dragged = true;
+      v = Math.max(-4, Math.min(4, drag.vel));
+      spiral.classList.remove('is-dragging');
+    }
+    drag = null;
+    run();
+  }
+  window.addEventListener('pointerup', endDrag);
+  window.addEventListener('pointercancel', endDrag);
+
+  // A drag that ends over a card is not a click on it.
+  stage.addEventListener(
+    'click',
+    function (e) {
+      if (dragged) {
+        dragged = false;
+        e.preventDefault();
+        e.stopPropagation();
+      }
+    },
+    true
+  );
+
+  if (io) {
+    new IntersectionObserver(function (e) {
+      spiralVisible = e[0].isIntersecting;
+      run();
+    }).observe(spiral);
+  }
+  document.addEventListener('visibilitychange', run);
+  window.addEventListener('resize', function () {
+    measure();
+    place();
+  });
+
+  measure();
+  place();
+  track(stage);
+  run();
 
   /* Pop-up -------------------------------------------------------------- */
 
@@ -335,9 +423,6 @@
 
     F.scroll.scrollTop = 0;
     $('.m-body', modal).scrollTop = 0;
-    $$('[data-open]', $('[data-nav-tools]')).forEach(function (a, j) {
-      a.classList.toggle('is-current', modalOpen && j === i);
-    });
   }
 
   function open(i, opts) {
@@ -402,10 +487,8 @@
       root.classList.remove('is-locked');
       F.media.innerHTML = '';
       modalOpen = false;
-      $$('.is-current', $('[data-nav-tools]')).forEach(function (a) {
-        a.classList.remove('is-current');
-      });
       refresh();
+      run();
       if (returnFocus && returnFocus.focus && returnFocus.isConnected) {
         returnFocus.focus({ preventScroll: true });
       }
@@ -476,41 +559,4 @@
 
   // A link straight to a tool, such as /#typeforge, opens it.
   if (hashIndex() >= 0) open(hashIndex(), { push: false });
-
-  /* Section highlighting in the navigation ----------------------------- */
-
-  var spyLinks = $$('[data-spy]');
-  var spyTargets = [
-    ['top', $('.hero')],
-    ['tools', $('#tools')],
-    ['index', $('#index')],
-    ['about', $('#about')],
-  ];
-  var spyQueued = false;
-
-  function spy() {
-    spyQueued = false;
-    var line = window.innerHeight * 0.45;
-    var at = 'top';
-    spyTargets.forEach(function (s) {
-      if (s[1] && s[1].getBoundingClientRect().top <= line) at = s[0];
-    });
-    if (window.innerHeight + window.scrollY >= document.documentElement.scrollHeight - 2) at = 'about';
-    spyLinks.forEach(function (a) {
-      a.classList.toggle('is-current', a.getAttribute('data-spy') === at);
-    });
-  }
-
-  window.addEventListener(
-    'scroll',
-    function () {
-      if (!spyQueued) {
-        spyQueued = true;
-        requestAnimationFrame(spy);
-      }
-    },
-    { passive: true }
-  );
-  window.addEventListener('resize', spy);
-  spy();
 })();

@@ -14,8 +14,6 @@
   --lh: 1.2;
 
   --gutter: 14px;
-  --nav-row: 40px;
-  --nav-h: calc(var(--nav-row) * 2 + 2px);
   --ease: cubic-bezier(0.2, 0.8, 0.2, 1);
   --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
 
@@ -32,7 +30,6 @@ html {
   background: var(--bg);
   scroll-behavior: smooth;
   scrollbar-gutter: stable;
-  scroll-padding-bottom: var(--nav-h);
   -webkit-text-size-adjust: 100%;
 }
 
@@ -51,7 +48,7 @@ body {
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   text-rendering: optimizeLegibility;
-  padding-bottom: calc(var(--nav-h) + 96px);
+  padding-bottom: 128px;
   overflow-x: clip;
 }
 
@@ -162,7 +159,7 @@ a.person:focus-visible .person-role {
   color: var(--fg);
 }
 
-/* Name in white, tagline in grey. Used under every tile. */
+/* Name in white, tagline in grey. */
 .caption {
   display: block;
 }
@@ -188,230 +185,140 @@ a.person:focus-visible .person-role {
   margin-top: 32px;
 }
 
-/* Hero ------------------------------------------------------------------ */
+/* Hero -------------------------------------------------------------------
+   The spiral sits where the reference sets its object: a 580 px band that
+   starts 80 px down the page, with the text 16 px below it. */
 
 .hero {
   position: relative;
+  height: 580px;
+  margin-top: 80px;
 }
 
-.hero-stage {
-  position: relative;
-  height: max(320px, calc(100svh - 300px));
-  overflow: hidden;
-  background: #050505;
-  cursor: pointer;
+.hero + .col {
+  margin-top: 16px;
 }
 
-.hero-slide {
+.spiral {
   position: absolute;
   inset: 0;
-  opacity: 0;
-  visibility: hidden;
-  transition: opacity 1.1s var(--ease), visibility 0s linear 1.1s;
+  perspective: var(--persp, 1760px);
+  perspective-origin: 50% 44%;
+  touch-action: pan-y;
+  user-select: none;
+  -webkit-user-select: none;
+  cursor: grab;
 }
 
-.hero-slide.is-active {
-  opacity: 1;
-  visibility: visible;
-  transition: opacity 1.1s var(--ease), visibility 0s;
+.spiral.is-dragging,
+.spiral.is-dragging .card {
+  cursor: grabbing;
 }
 
-.hero-slide > video {
+.spiral-stage {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 0;
+  height: 0;
+  transform-style: preserve-3d;
+  transform: rotateX(-9deg);
+}
+
+.card {
+  position: absolute;
+  left: calc(var(--cw, 252px) / -2);
+  top: calc(var(--ch, 158px) / -2);
+  width: var(--cw, 252px);
+  height: var(--ch, 158px);
+  transform-style: preserve-3d;
+  will-change: transform;
+}
+
+.card-face {
+  position: absolute;
+  inset: 0;
+  opacity: var(--fade, 1);
+  border-radius: 6px;
+  overflow: hidden;
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+}
+
+.card-front {
+  background: #0a0a0a;
+}
+
+.card-media {
+  position: absolute;
+  inset: 0;
+  display: block;
+  transition: transform 0.8s var(--ease-out);
+}
+
+.card-media > video {
+  display: block;
   width: 100%;
   height: 100%;
   object-fit: cover;
-  display: block;
 }
 
-.hero-caption {
-  display: flex;
-  align-items: baseline;
-  gap: 16px;
-  padding: 13px var(--gutter) 0;
+.card-shade {
+  position: absolute;
+  inset: 0;
+  background: #000;
+  pointer-events: none;
 }
 
-.hero-link:hover .caption-tag,
-.hero-link:focus-visible .caption-tag {
-  color: var(--fg);
-}
-
-.hero-count {
-  flex: none;
-  white-space: nowrap;
-  margin-left: auto;
-  color: var(--fg-3);
-  font-variant-numeric: tabular-nums;
-}
-
-.intro {
-  margin-top: 72px;
-}
-
-@media (max-width: 639px) {
-  .hero-stage {
-    height: min(100vw, max(300px, 100svh - 300px));
-  }
-
-  .intro {
-    margin-top: 56px;
-  }
-}
-
-/* Tools grid ------------------------------------------------------------ */
-
-.tools {
-  margin: 112px 0 128px;
-}
-
-.grid {
+/* Seen from behind, a card is a dark plate with its name on it. */
+.card-back {
+  transform: rotateY(180deg);
+  background: #0d0d0d;
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.08);
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  column-gap: 8px;
-  row-gap: 44px;
-  padding: 0 10px;
+  place-items: center;
+  color: var(--fg-3);
+  font-size: 12px;
 }
 
-.tile {
-  display: flex;
-  flex-direction: column;
-  min-width: 0;
-  text-align: left;
-  color: inherit;
+.card:hover .card-media,
+.card:focus-visible .card-media {
+  transform: scale(1.04);
 }
 
-.tile-media {
-  position: relative;
-  aspect-ratio: 1 / 1;
-  border-radius: 6px;
-  overflow: hidden;
-  background: #0a0a0a;
-  isolation: isolate;
-}
-
-.tile-media > .pv,
-.tile-media > video {
-  transition: transform 1.2s var(--ease-out);
-}
-
-.tile:hover .tile-media > .pv,
-.tile:hover .tile-media > video,
-.tile:focus-visible .tile-media > .pv,
-.tile:focus-visible .tile-media > video {
-  transform: scale(1.025);
-}
-
-.tile:hover .caption-tag,
-.tile:focus-visible .caption-tag {
-  color: var(--fg);
-}
-
-.tile:focus-visible {
+.card:focus-visible {
   outline: none;
 }
 
-.tile:focus-visible .tile-media {
-  outline: 1px solid var(--fg);
-  outline-offset: 3px;
+.card:focus-visible .card-front {
+  box-shadow: 0 0 0 1px var(--fg);
 }
 
-.tile .caption {
-  margin-top: 13px;
-  padding: 0 1px;
-}
-
-/* The first tool is shown across two columns. */
-.tile--wide {
-  grid-column: span 2;
-}
-
-.tile--wide .tile-media {
-  aspect-ratio: auto;
-  flex: 1 1 0;
-  min-height: 0;
-}
-
-/* The last tile: what is coming. */
-.tile--soon .tile-media {
-  background: #0b0b0b;
-  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.07);
-  display: grid;
-  place-items: center;
-}
-
-.soon {
-  display: grid;
-  justify-items: center;
-  gap: 18px;
-  color: var(--fg-3);
-}
-
-.soon-plus {
-  position: relative;
-  width: 28px;
-  height: 28px;
-  transition: transform 1.2s var(--ease-out);
-}
-
-.soon-plus::before,
-.soon-plus::after {
-  content: "";
+.spiral-label {
   position: absolute;
-  background: var(--fg-2);
   left: 50%;
-  top: 50%;
-  transform: translate(-50%, -50%);
+  bottom: 18px;
+  max-width: calc(100% - 48px);
+  text-align: center;
+  pointer-events: none;
+  opacity: 0;
+  transform: translate(-50%, 4px);
+  transition: opacity 0.3s var(--ease), transform 0.4s var(--ease-out);
 }
 
-.soon-plus::before {
-  width: 28px;
-  height: 1px;
-}
-
-.soon-plus::after {
-  width: 1px;
-  height: 28px;
-}
-
-.tile--soon:hover .soon-plus {
-  transform: rotate(90deg);
-}
-
-@media (max-width: 999px) {
-  .grid {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
-
-  .tile--wide .tile-media {
-    aspect-ratio: 2 / 1;
-    flex: none;
-  }
-
-  .tile--soon {
-    grid-column: span 2;
-  }
-
-  .tile--soon .tile-media {
-    aspect-ratio: 2 / 1;
-  }
+.spiral-label.is-on {
+  opacity: 1;
+  transform: translate(-50%, 0);
 }
 
 @media (max-width: 639px) {
-  .grid {
-    grid-template-columns: minmax(0, 1fr);
-    row-gap: 36px;
+  .hero {
+    height: 446px;
+    margin-top: 20px;
   }
 
-  .tile--wide,
-  .tile--soon {
-    grid-column: auto;
-  }
-
-  .tile--wide .tile-media {
-    aspect-ratio: 1 / 1;
-  }
-
-  .tile--soon .tile-media {
-    aspect-ratio: 2 / 1;
+  .spiral-label {
+    bottom: 6px;
   }
 }
 
@@ -446,53 +353,6 @@ a.person:focus-visible .person-role {
 .noscript {
   margin-top: 48px;
   color: var(--fg-2);
-}
-
-/* Navigation ------------------------------------------------------------ */
-
-.nav {
-  position: fixed;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  z-index: 20;
-  background: var(--bg);
-  padding-bottom: env(safe-area-inset-bottom);
-}
-
-.nav-row {
-  display: flex;
-  align-items: center;
-  gap: 20px;
-  height: var(--nav-row);
-  padding: 0 var(--gutter);
-  border-top: 1px solid var(--line);
-  white-space: nowrap;
-}
-
-.nav-row--tools {
-  overflow-x: auto;
-  scrollbar-width: none;
-}
-
-.nav-row--tools::-webkit-scrollbar {
-  display: none;
-}
-
-.nav-link {
-  color: var(--fg-2);
-  transition: color 0.25s var(--ease);
-  flex: none;
-}
-
-.nav-link:hover,
-.nav-link:focus-visible,
-.nav-link.is-current {
-  color: var(--fg);
-}
-
-.nav-end {
-  margin-left: auto;
 }
 
 /* Modal ----------------------------------------------------------------- */
@@ -1521,7 +1381,8 @@ a.person:focus-visible .person-role {
   .modal-panel,
   .modal-scrim,
   .m-content,
-  .hero-slide {
+  .card-media,
+  .spiral-label {
     transition-duration: 0.01s !important;
   }
 }
