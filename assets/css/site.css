@@ -159,6 +159,34 @@ a.person:focus-visible .person-role {
   color: var(--fg);
 }
 
+/* The index runs down two columns, filling the left one first. */
+.people--cols {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  grid-template-rows: repeat(var(--rows, 4), auto);
+  grid-auto-flow: column;
+  column-gap: 24px;
+  row-gap: 10px;
+}
+
+.people--cols > li + li {
+  margin-top: 0;
+}
+
+/* A link inside running text stays white, marked by a quiet underline. */
+.indent p a {
+  text-decoration: underline;
+  text-decoration-color: rgba(255, 255, 255, 0.35);
+  text-decoration-thickness: 1px;
+  text-underline-offset: 3px;
+  transition: text-decoration-color 0.25s var(--ease);
+}
+
+.indent p a:hover,
+.indent p a:focus-visible {
+  text-decoration-color: currentColor;
+}
+
 /* Name in white, tagline in grey. */
 .caption {
   display: block;
@@ -320,34 +348,6 @@ a.person:focus-visible .person-role {
   .spiral-label {
     bottom: 6px;
   }
-}
-
-/* Note card ------------------------------------------------------------- */
-
-.note {
-  background: var(--card);
-  border-radius: 8px;
-  padding: 18px 18px 18px 18px;
-  margin-left: 14px;
-  color: var(--fg-2);
-}
-
-.note p + p {
-  margin-top: 12px;
-}
-
-.note a {
-  color: var(--fg);
-}
-
-.note a:hover {
-  text-decoration: underline;
-  text-underline-offset: 3px;
-  text-decoration-thickness: 1px;
-}
-
-#about {
-  margin-top: 36px;
 }
 
 .noscript {

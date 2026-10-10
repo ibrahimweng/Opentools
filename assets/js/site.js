@@ -134,7 +134,9 @@
 
   /* Index ---------------------------------------------------------------- */
 
-  $('[data-index]').innerHTML = tools
+  var index = $('[data-index]');
+  index.style.setProperty('--rows', Math.ceil(tools.length / 2));
+  index.innerHTML = tools
     .map(function (t) {
       return (
         '<li><a class="person" href="#' + esc(t.slug) + '" data-open="' + esc(t.slug) + '">' +
