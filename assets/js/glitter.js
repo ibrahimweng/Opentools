@@ -1,22 +1,21 @@
 /*
  * The OpenTools wordmark, written in glitter.
  *
- * The word is the empty space: a field of silver flakes with the letters kept
- * clear, like glitter sprinkled over a stencil. Grab the word and drag it, and
- * its edges plough the flakes aside; let go and it glides back to the middle
- * while they settle. A pointer passing over the field brushes flakes away, and
- * they drift back to where they lay.
- *
- * The flakes are drawn with WebGL, which keeps tens of thousands of them
- * smooth. Where WebGL is missing, a canvas fallback draws fewer.
+ * The word is the empty space, like glitter sprinkled over a stencil: flakes
+ * lie thickest against the letters and thin out with distance, so the black
+ * page shows around the band. Grab the word and drag it, and its edges plough
+ * the flakes aside; let go and it glides back while they settle. A pointer
+ * passing over the flakes brushes them away, and they drift back.
  */
 (function () {
   'use strict';
 
   var WEIGHT = 800;
   var FAMILY = '"Inter", "Helvetica Neue", Arial, sans-serif';
-  var PAD = 28; // clear space kept around the letters in the mask, in px
+  var PAD = 24; // margin around the letters in the word's own mask, in px
   var CELL = 2; // the push field is sampled every 2 px
+  var GRID = 4; // the density map is sampled every 4 px
+  var LEVELS = 6; // shades of silver, darkest first
 
   /* Helpers ---------------------------------------------------------------- */
 
@@ -43,62 +42,35 @@
     return out;
   }
 
-  function shader(gl, type, src) {
-    var s = gl.createShader(type);
-    gl.shaderSource(s, src);
-    gl.compileShader(s);
-    if (!gl.getShaderParameter(s, gl.COMPILE_STATUS)) throw new Error(gl.getShaderInfoLog(s));
-    return s;
+  // Smooth value noise, so the edge of the glitter is ragged rather than a
+  // clean blur.
+  function noise(seed) {
+    function hash(x, y) {
+      var h = (x * 374761393 + y * 668265263 + seed * 2246822519) | 0;
+      h = Math.imul(h ^ (h >>> 13), 1274126177);
+      return ((h ^ (h >>> 16)) >>> 0) / 4294967296;
+    }
+    return function (x, y) {
+      var xi = Math.floor(x);
+      var yi = Math.floor(y);
+      var xf = x - xi;
+      var yf = y - yi;
+      var u = xf * xf * (3 - 2 * xf);
+      var v = yf * yf * (3 - 2 * yf);
+      var a = hash(xi, yi);
+      var b = hash(xi + 1, yi);
+      var c = hash(xi, yi + 1);
+      var d = hash(xi + 1, yi + 1);
+      return a + (b - a) * u + (c - a) * v + (a - b - c + d) * u * v;
+    };
   }
-
-  function program(gl, vs, fs) {
-    var p = gl.createProgram();
-    gl.attachShader(p, shader(gl, gl.VERTEX_SHADER, vs));
-    gl.attachShader(p, shader(gl, gl.FRAGMENT_SHADER, fs));
-    gl.linkProgram(p);
-    if (!gl.getProgramParameter(p, gl.LINK_STATUS)) throw new Error(gl.getProgramInfoLog(p));
-    return p;
-  }
-
-  // Flakes are small squares.
-  var FLAKE_VS =
-    'attribute vec3 a_pos; attribute float a_shade;' +
-    'uniform vec2 u_res; uniform float u_dpr; varying float v_shade;' +
-    'void main(){' +
-    ' vec2 c = a_pos.xy / u_res * 2.0 - 1.0;' +
-    ' gl_Position = vec4(c.x, -c.y, 0.0, 1.0);' +
-    ' gl_PointSize = a_pos.z * u_dpr;' +
-    ' v_shade = a_shade;' +
-    '}';
-  var FLAKE_FS =
-    'precision mediump float; varying float v_shade;' +
-    'void main(){ gl_FragColor = vec4(vec3(v_shade), 1.0); }';
-
-  // A glint is a four-pointed star, added on top of the flakes.
-  var GLINT_VS =
-    'attribute vec3 a_glint;' +
-    'uniform vec2 u_res; uniform float u_dpr; varying float v_a;' +
-    'void main(){' +
-    ' vec2 c = a_glint.xy / u_res * 2.0 - 1.0;' +
-    ' gl_Position = vec4(c.x, -c.y, 0.0, 1.0);' +
-    ' gl_PointSize = 18.0 * u_dpr;' +
-    ' v_a = a_glint.z;' +
-    '}';
-  var GLINT_FS =
-    'precision mediump float; varying float v_a;' +
-    'void main(){' +
-    ' vec2 p = abs(gl_PointCoord - 0.5) * 2.0;' +
-    ' float arms = max(exp(-p.y * 26.0) * (1.0 - p.x), exp(-p.x * 26.0) * (1.0 - p.y));' +
-    ' float core = exp(-dot(p, p) * 30.0);' +
-    ' float a = clamp(arms + core, 0.0, 1.0) * v_a;' +
-    ' gl_FragColor = vec4(vec3(a), a);' +
-    '}';
 
   /* The field --------------------------------------------------------------- */
 
   function Glitter(canvas, opts) {
     opts = opts || {};
     this.canvas = canvas;
+    this.ctx = canvas.getContext('2d');
     this.text = opts.text || 'OpenTools';
     this.reducedQuery = opts.reduced || null;
     this.paused = false;
@@ -106,26 +78,26 @@
     this.raf = 0;
     this.last = 0;
     this.t = 0;
-    this.odd = false;
+    this.frame = 0;
     this.ready = false;
+    this.fontReady = false;
+    this.builtW = 0;
     this.ptr = { x: 0, y: 0, vx: 0, vy: 0, on: false, at: 0 };
     this.drag = null;
     this.loop = this.loop.bind(this);
-    this.initRenderer();
     this.bind();
 
     var self = this;
-    var started = false;
     var go = function () {
-      if (started) return;
-      started = true;
+      if (self.fontReady) return;
+      self.fontReady = true;
       self.build(true);
-      self.schedule();
     };
-    // The mask is cut from the real typeface, so wait briefly for it.
+    // The letters are cut from the real typeface, so wait briefly for it,
+    // and go ahead with the fallback face if it is slow.
     if (document.fonts && document.fonts.load) {
       document.fonts.load(WEIGHT + ' 100px Inter').then(go, go);
-      setTimeout(go, 1500);
+      setTimeout(go, 1200);
     } else {
       go();
     }
@@ -135,34 +107,29 @@
     return !!(this.reducedQuery && this.reducedQuery.matches);
   };
 
-  Glitter.prototype.initRenderer = function () {
-    var gl = null;
-    try {
-      gl = this.canvas.getContext('webgl', { alpha: true, antialias: false, premultipliedAlpha: true });
-    } catch (e) {}
-    if (gl) {
-      try {
-        this.gl = gl;
-        this.flakeProg = program(gl, FLAKE_VS, FLAKE_FS);
-        this.glintProg = program(gl, GLINT_VS, GLINT_FS);
-        this.posBuf = gl.createBuffer();
-        this.shadeBuf = gl.createBuffer();
-        this.glintBuf = gl.createBuffer();
-        gl.disable(gl.DEPTH_TEST);
-        gl.clearColor(0, 0, 0, 0);
-        return;
-      } catch (e) {
-        this.gl = null;
-      }
-    }
-    this.ctx = this.canvas.getContext('2d');
-  };
-
+  // Cut the word and lay the flakes around it. Runs again when the width
+  // changes, and waits quietly if the canvas has no size yet.
   Glitter.prototype.build = function (intro) {
+    if (!this.fontReady) return;
     var c = this.canvas;
     var W = c.clientWidth;
     var H = c.clientHeight;
     if (!W || !H) return;
+    try {
+      this.layout(W, H);
+      this.seed(intro && !this.reduced());
+      this.hideUnderWord();
+      this.builtW = W;
+      this.ready = true;
+      this.draw();
+      this.schedule();
+    } catch (e) {
+      if (window.console) console.error('OpenTools glitter:', e);
+    }
+  };
+
+  Glitter.prototype.layout = function (W, H) {
+    var c = this.canvas;
     var dpr = Math.min(2, window.devicePixelRatio || 1);
     this.W = W;
     this.H = H;
@@ -171,8 +138,9 @@
     c.height = Math.round(H * dpr);
 
     // On a narrow screen the word stacks, so the letters stay big enough to
-    // read as gaps in the glitter.
-    var lines = W < 640 ? this.text.replace(/([a-z])([A-Z])/, '$1\n$2').split('\n') : [this.text];
+    // read as gaps.
+    var narrow = W < 640;
+    var lines = narrow ? this.text.replace(/([a-z])([A-Z])/, '$1\n$2').split('\n') : [this.text];
 
     var setFont = function (ctx, size) {
       ctx.font = WEIGHT + ' ' + size + 'px ' + FAMILY;
@@ -185,7 +153,10 @@
       var m = probe.measureText(l);
       widest = Math.max(widest, m.actualBoundingBoxLeft + m.actualBoundingBoxRight);
     });
-    var size = Math.min((W * (lines.length > 1 ? 0.8 : 0.84) * 100) / widest, H * (lines.length > 1 ? 0.3 : 0.38));
+    var size = Math.min(
+      ((narrow ? W * 0.74 : Math.min(W * 0.78, 1500)) * 100) / widest,
+      H * (narrow ? 0.26 : 0.3)
+    );
 
     var mc = document.createElement('canvas');
     var mx = mc.getContext('2d');
@@ -201,21 +172,20 @@
       desc = Math.max(desc, m.actualBoundingBoxDescent);
       inkW = Math.max(inkW, m.actualBoundingBoxLeft + m.actualBoundingBoxRight);
     });
-    var advance = asc + desc + size * 0.06;
+    var advance = asc + desc + size * 0.08;
     var mw = Math.ceil(inkW + PAD * 2);
     var mh = Math.ceil(asc + (lines.length - 1) * advance + desc + PAD * 2);
     mc.width = mw;
     mc.height = mh;
     setFont(mx, size);
     mx.fillStyle = '#fff';
-    mx.textBaseline = 'alphabetic';
     metrics.forEach(function (m, i) {
       var lineW = m.actualBoundingBoxLeft + m.actualBoundingBoxRight;
       mx.fillText(lines[i], (mw - lineW) / 2 + m.actualBoundingBoxLeft, PAD + asc + i * advance);
     });
 
-    // A hard mask decides which flakes are hidden under the letters; a soft
-    // field around it decides which way a moving edge pushes them.
+    // The mask says which flakes the letters hide; the push field around it
+    // says which way a moving edge shoves them.
     var px = mx.getImageData(0, 0, mw, mh).data;
     var mask = new Uint8Array(mw * mh);
     for (var i = 0; i < mw * mh; i++) mask[i] = px[i * 4 + 3] > 110 ? 1 : 0;
@@ -233,29 +203,49 @@
     this.mh = mh;
     this.fw = fw;
     this.fh = fh;
-    this.rx = (W - mw) / 2;
-    this.ry = (H - mh) / 2;
+    this.size = size;
+    this.capH = asc;
+    this.rx = Math.round((W - mw) / 2);
+    this.ry = Math.round((H - mh) / 2);
     this.wx = this.rx;
     this.wy = this.ry;
     this.wvx = 0;
     this.wvy = 0;
     this.drag = null;
-
-    this.seed(intro && !this.reduced());
-    this.ready = true;
-    this.hideUnderWord();
-    this.draw(true);
   };
 
-  // Flakes lie thickest through the middle of the band, thinning towards its
-  // top and bottom and into the corners.
+  // Flakes gather against the letters, inside their counters and between
+  // them, and thin out with distance into the black. Some lie under the
+  // letters too, hidden as glitter under a stencil is, so moving the word
+  // uncovers glitter rather than a hole.
   Glitter.prototype.seed = function (sprinkle) {
     var W = this.W;
     var H = this.H;
     var narrow = W < 640;
-    var density = this.gl ? (narrow ? 0.07 : 0.046) : narrow ? 0.04 : 0.016;
-    var cap = this.gl ? 48000 : 14000;
-    var n = Math.round(Math.max(3000, Math.min(cap, W * H * density)));
+    var reach = this.capH * (narrow ? 0.62 : 0.55); // how far the band spreads past the letters
+    var ox = this.rx - reach; // the density map's origin on the canvas
+    var oy = this.ry - reach;
+    var gw = Math.ceil((this.mw + reach * 2) / GRID);
+    var gh = Math.ceil((this.mh + reach * 2) / GRID);
+    var grid = new Float32Array(gw * gh);
+    var x, y, i;
+    for (y = 0; y < this.mh; y += 2) {
+      for (x = 0; x < this.mw; x += 2) {
+        if (this.mask[y * this.mw + x]) {
+          var gx = ((x + reach) / GRID) | 0;
+          var gy = ((y + reach) / GRID) | 0;
+          grid[gy * gw + gx] += 1;
+        }
+      }
+    }
+    var r = Math.max(2, Math.round(reach / GRID / 2.2));
+    var near = boxBlur(boxBlur(boxBlur(grid, gw, gh, r), gw, gh, r), gw, gh, r);
+    var peak = 0;
+    for (i = 0; i < near.length; i++) peak = Math.max(peak, near[i]);
+
+    var n = narrow ? Math.round(Math.min(6400, Math.max(3000, W * 15))) : Math.round(Math.min(13500, Math.max(4200, this.mw * 8.8)));
+    var noise1 = noise(7);
+    var scale = 1 / (this.capH * 0.32);
     this.n = n;
     this.hx = new Float32Array(n);
     this.hy = new Float32Array(n);
@@ -263,60 +253,68 @@
     this.y = new Float32Array(n);
     this.vx = new Float32Array(n);
     this.vy = new Float32Array(n);
-    this.size = new Float32Array(n);
-    this.tone = new Float32Array(n);
+    this.sz = new Float32Array(n);
+    this.tone = new Uint8Array(n);
     this.phase = new Float32Array(n);
     this.rate = new Float32Array(n);
     this.hidden = new Uint8Array(n);
-    this.pos = new Float32Array(n * 3);
-    this.shades = new Float32Array(n);
-    var glints = [];
     var rnd = Math.random;
-
-    for (var i = 0; i < n; i++) {
-      var x, y, p;
-      do {
-        x = rnd() * W;
-        y = rnd() * H;
-        var dy = (y - H / 2) / (H * (narrow ? 0.48 : 0.4));
-        var dx = Math.abs((x - W / 2) / (W / 2));
-        p = 0.12 + 0.88 * Math.exp(-dy * dy) * (1 - 0.5 * dx * dx * dx * dx);
-      } while (rnd() > p);
-      this.hx[i] = x;
-      this.hy[i] = y;
-      this.x[i] = sprinkle ? x + (rnd() + rnd() + rnd() - 1.5) * 36 : x;
-      this.y[i] = sprinkle ? y - 30 - rnd() * 140 : y;
-      this.size[i] = 0.9 + Math.pow(rnd(), 1.8) * (narrow ? 1.5 : 1.9);
-      // Mostly mid silvers, some dark, a few nearly white.
-      var r = rnd();
-      this.tone[i] = r < 0.2 ? 0.22 + rnd() * 0.12 : r < 0.85 ? 0.38 + rnd() * 0.36 : 0.78 + rnd() * 0.2;
-      this.phase[i] = rnd() * Math.PI * 2;
-      this.rate[i] = 0.5 + rnd() * 2.2;
-      if (rnd() < (narrow ? 0.006 : 0.004)) glints.push(i);
+    var tries = 0;
+    var k = 0;
+    var limit = n * 60;
+    while (k < n && tries < limit) {
+      tries++;
+      var gxr = rnd() * gw;
+      var gyr = rnd() * gh;
+      var d = near[(gyr | 0) * gw + (gxr | 0)] / peak;
+      if (d < 0.02) continue;
+      var p = Math.pow(d, 0.65) * (0.45 + 0.75 * noise1(gxr * GRID * scale, gyr * GRID * scale));
+      if (rnd() > p) continue;
+      x = ox + gxr * GRID;
+      y = oy + gyr * GRID;
+      if (x < 0 || y < 0 || x >= W || y >= H) continue;
+      this.hx[k] = x;
+      this.hy[k] = y;
+      this.x[k] = sprinkle ? x + (rnd() - 0.5) * 30 : x;
+      this.y[k] = sprinkle ? y - 20 - rnd() * 90 : y;
+      this.sz[k] = 0.9 + Math.pow(rnd(), 2) * (narrow ? 1.4 : 1.7);
+      var t = rnd();
+      this.tone[k] = t < 0.18 ? 0 : t < 0.38 ? 1 : t < 0.6 ? 2 : t < 0.8 ? 3 : t < 0.94 ? 4 : 5;
+      this.phase[k] = rnd() * Math.PI * 2;
+      this.rate[k] = 0.4 + rnd() * 2;
+      k++;
     }
+    this.n = k;
+    var glints = [];
+    for (i = 0; i < k; i++) if (rnd() < 0.005) glints.push(i);
     this.glints = glints;
-    this.glintData = new Float32Array(glints.length * 3);
+    this.buckets = [];
+    for (i = 0; i < LEVELS; i++) this.buckets.push(new Int32Array(k));
+    this.counts = new Int32Array(LEVELS);
+    this.colors = [];
+    for (i = 0; i < LEVELS; i++) {
+      var g = Math.round(70 + (i / (LEVELS - 1)) * 175);
+      this.colors.push('rgb(' + g + ',' + g + ',' + g + ')');
+    }
   };
 
   /* Motion ----------------------------------------------------------------- */
 
-  Glitter.prototype.inside = function (i) {
-    var cx = (this.x[i] + this.size[i] * 0.5 - this.wx) | 0;
-    var cy = (this.y[i] + this.size[i] * 0.5 - this.wy) | 0;
-    return cx >= 0 && cy >= 0 && cx < this.mw && cy < this.mh ? this.mask[cy * this.mw + cx] : 0;
-  };
-
   Glitter.prototype.hideUnderWord = function () {
-    for (var i = 0; i < this.n; i++) this.hidden[i] = this.inside(i);
+    for (var i = 0; i < this.n; i++) {
+      var cx = (this.x[i] + this.sz[i] * 0.5 - this.wx) | 0;
+      var cy = (this.y[i] + this.sz[i] * 0.5 - this.wy) | 0;
+      this.hidden[i] = cx >= 0 && cy >= 0 && cx < this.mw && cy < this.mh ? this.mask[cy * this.mw + cx] : 0;
+    }
   };
 
   Glitter.prototype.overWord = function (p) {
     return (
       this.ready &&
-      p.x > this.wx + PAD - 14 &&
-      p.x < this.wx + this.mw - PAD + 14 &&
-      p.y > this.wy + PAD - 14 &&
-      p.y < this.wy + this.mh - PAD + 14
+      p.x > this.wx + PAD - 16 &&
+      p.x < this.wx + this.mw - PAD + 16 &&
+      p.y > this.wy + PAD - 16 &&
+      p.y < this.wy + this.mh - PAD + 16
     );
   };
 
@@ -350,16 +348,16 @@
       }
     }
     var wspeed = Math.sqrt(this.wvx * this.wvx + this.wvy * this.wvy) * 60; // px a second
-    var wordMoving = this.drag || wspeed > 4;
+    var wordMoving = !!this.drag || wspeed > 4;
     var push = 0.45 + Math.min(1.4, wspeed / 500);
 
     // The pointer brushes flakes only while it is moving.
     var ptr = this.ptr;
     var brushing = ptr.on && !this.drag && now - ptr.at < 120;
-    var R = this.W < 640 ? 60 : 88;
+    var R = this.W < 640 ? 56 : 80;
     var R2 = R * R;
     var pspeed = Math.sqrt(ptr.vx * ptr.vx + ptr.vy * ptr.vy);
-    var pforce = 0.32 + Math.min(2, pspeed / 450);
+    var pforce = 0.3 + Math.min(2, pspeed / 450);
     var pvx = (ptr.vx / 60) * 0.06;
     var pvy = (ptr.vy / 60) * 0.06;
 
@@ -379,7 +377,7 @@
     var VY = this.vy;
     var HX = this.hx;
     var HY = this.hy;
-    var S = this.size;
+    var S = this.sz;
     var hidden = this.hidden;
     var moving = 0;
 
@@ -389,8 +387,8 @@
       var vx = VX[i];
       var vy = VY[i];
 
-      // A flake under a letter is under the stencil: it stays put, unseen,
-      // until the word moves off it. Only flakes in the open are pushed.
+      // A flake under a letter stays put, unseen, until the word moves off
+      // it. Only flakes in the open are pushed.
       if (!hidden[i]) {
         if (wordMoving) {
           var gx = ((x - wx) / CELL) | 0;
@@ -445,131 +443,58 @@
 
   /* Drawing ---------------------------------------------------------------- */
 
-  // Now and then a flake catches the light and brightens.
-  Glitter.prototype.shimmer = function () {
-    var still = this.reduced();
-    var t = this.t;
-    var tone = this.tone;
-    var out = this.shades;
-    for (var i = 0; i < this.n; i++) {
-      var v = tone[i];
-      if (!still) {
-        var s = Math.sin(t * this.rate[i] + this.phase[i]);
-        if (s > 0.97) v = 1;
-        else if (s > 0.88) v = Math.min(1, v + 0.22);
-      }
-      out[i] = v;
-    }
-    var g = this.glintData;
-    for (var j = 0; j < this.glints.length; j++) {
-      var k = this.glints[j];
-      var a = still || this.hidden[k] ? 0 : Math.sin(t * this.rate[k] * 0.7 + this.phase[k]);
-      a = a > 0.6 ? Math.pow((a - 0.6) / 0.4, 2) : 0;
-      g[j * 3] = this.x[k] + this.size[k] / 2;
-      g[j * 3 + 1] = this.y[k] + this.size[k] / 2;
-      g[j * 3 + 2] = a;
-    }
-  };
-
-  // A hidden flake is moved off the canvas. Shrinking it to nothing is not
-  // enough: WebGL draws a point no smaller than one pixel.
-  Glitter.prototype.packPositions = function () {
-    var pos = this.pos;
-    for (var i = 0; i < this.n; i++) {
-      var off = this.hidden[i];
-      pos[i * 3] = off ? -1000 : this.x[i];
-      pos[i * 3 + 1] = off ? -1000 : this.y[i];
-      pos[i * 3 + 2] = this.size[i];
-    }
-  };
-
-  Glitter.prototype.draw = function (moved) {
-    this.shimmer();
-    if (this.gl) this.drawGL(moved);
-    else this.draw2D();
-  };
-
-  Glitter.prototype.drawGL = function (moved) {
-    var gl = this.gl;
-    gl.viewport(0, 0, this.canvas.width, this.canvas.height);
-    gl.clear(gl.COLOR_BUFFER_BIT);
-
-    var p = this.flakeProg;
-    gl.useProgram(p);
-    gl.uniform2f(gl.getUniformLocation(p, 'u_res'), this.W, this.H);
-    gl.uniform1f(gl.getUniformLocation(p, 'u_dpr'), this.dpr);
-    gl.disable(gl.BLEND);
-
-    var aPos = gl.getAttribLocation(p, 'a_pos');
-    gl.bindBuffer(gl.ARRAY_BUFFER, this.posBuf);
-    if (moved) {
-      this.packPositions();
-      gl.bufferData(gl.ARRAY_BUFFER, this.pos, gl.DYNAMIC_DRAW);
-    }
-    gl.enableVertexAttribArray(aPos);
-    gl.vertexAttribPointer(aPos, 3, gl.FLOAT, false, 0, 0);
-
-    var aShade = gl.getAttribLocation(p, 'a_shade');
-    gl.bindBuffer(gl.ARRAY_BUFFER, this.shadeBuf);
-    gl.bufferData(gl.ARRAY_BUFFER, this.shades, gl.DYNAMIC_DRAW);
-    gl.enableVertexAttribArray(aShade);
-    gl.vertexAttribPointer(aShade, 1, gl.FLOAT, false, 0, 0);
-    gl.drawArrays(gl.POINTS, 0, this.n);
-    gl.disableVertexAttribArray(aShade);
-
-    if (this.glints.length && !this.reduced()) {
-      var g = this.glintProg;
-      gl.useProgram(g);
-      gl.uniform2f(gl.getUniformLocation(g, 'u_res'), this.W, this.H);
-      gl.uniform1f(gl.getUniformLocation(g, 'u_dpr'), this.dpr);
-      gl.enable(gl.BLEND);
-      gl.blendFunc(gl.ONE, gl.ONE);
-      var aG = gl.getAttribLocation(g, 'a_glint');
-      gl.bindBuffer(gl.ARRAY_BUFFER, this.glintBuf);
-      gl.bufferData(gl.ARRAY_BUFFER, this.glintData, gl.DYNAMIC_DRAW);
-      gl.enableVertexAttribArray(aG);
-      gl.vertexAttribPointer(aG, 3, gl.FLOAT, false, 0, 0);
-      gl.drawArrays(gl.POINTS, 0, this.glints.length);
-      gl.disableVertexAttribArray(aG);
-      gl.disable(gl.BLEND);
-    }
-  };
-
-  // The fallback groups flakes into a few greys, so each grey is one fill.
-  Glitter.prototype.draw2D = function () {
+  // Flakes are grouped into a few shades of silver, so each shade is one
+  // fill. Now and then a flake catches the light and brightens.
+  Glitter.prototype.draw = function () {
     var ctx = this.ctx;
     ctx.setTransform(this.dpr, 0, 0, this.dpr, 0, 0);
     ctx.clearRect(0, 0, this.W, this.H);
-    var LEVELS = 6;
-    if (!this.buckets) this.buckets = [];
-    for (var b = 0; b < LEVELS; b++) {
-      if (!this.buckets[b] || this.buckets[b].length < this.n) this.buckets[b] = new Int32Array(this.n);
-    }
-    var counts = new Int32Array(LEVELS);
-    var i, j;
+    var still = this.reduced();
+    var t = this.t;
+    var X = this.x;
+    var Y = this.y;
+    var S = this.sz;
+    var buckets = this.buckets;
+    var counts = this.counts;
+    var i, j, b;
+    for (b = 0; b < LEVELS; b++) counts[b] = 0;
     for (i = 0; i < this.n; i++) {
       if (this.hidden[i]) continue;
-      b = Math.min(LEVELS - 1, (this.shades[i] * LEVELS) | 0);
-      this.buckets[b][counts[b]++] = i;
+      b = this.tone[i];
+      if (!still) {
+        var s = Math.sin(t * this.rate[i] + this.phase[i]);
+        if (s > 0.97) b = LEVELS - 1;
+        else if (s > 0.9 && b < LEVELS - 2) b += 1;
+      }
+      buckets[b][counts[b]++] = i;
     }
     for (b = 0; b < LEVELS; b++) {
-      var g = Math.round(((b + 0.5) / LEVELS) * 255);
-      ctx.fillStyle = 'rgb(' + g + ',' + g + ',' + g + ')';
+      if (!counts[b]) continue;
+      ctx.fillStyle = this.colors[b];
       ctx.beginPath();
+      var list = buckets[b];
       for (j = 0; j < counts[b]; j++) {
-        i = this.buckets[b][j];
-        ctx.rect(this.x[i], this.y[i], this.size[i], this.size[i]);
+        i = list[j];
+        ctx.rect(X[i], Y[i], S[i], S[i]);
       }
       ctx.fill();
     }
-    var gd = this.glintData;
+
+    // A few flakes flash as small four-pointed stars.
+    if (still) return;
     for (j = 0; j < this.glints.length; j++) {
-      var a = gd[j * 3 + 2];
-      if (a < 0.02) continue;
-      var len = 5 * (0.5 + a);
+      i = this.glints[j];
+      if (this.hidden[i]) continue;
+      var a = Math.sin(t * this.rate[i] * 0.7 + this.phase[i]);
+      if (a < 0.6) continue;
+      a = Math.pow((a - 0.6) / 0.4, 2);
+      var len = 3 + 4 * a;
+      var gx = X[i] + S[i] / 2;
+      var gy = Y[i] + S[i] / 2;
       ctx.fillStyle = 'rgba(255,255,255,' + a.toFixed(3) + ')';
-      ctx.fillRect(gd[j * 3] - len, gd[j * 3 + 1] - 0.4, len * 2, 0.8);
-      ctx.fillRect(gd[j * 3] - 0.4, gd[j * 3 + 1] - len, 0.8, len * 2);
+      ctx.fillRect(gx - len, gy - 0.4, len * 2, 0.8);
+      ctx.fillRect(gx - 0.4, gy - len, 0.8, len * 2);
+      ctx.fillRect(gx - 1, gy - 1, 2, 2);
     }
   };
 
@@ -579,10 +504,11 @@
     var dt = this.last ? Math.min(0.05, (now - this.last) / 1000) : 1 / 60;
     this.last = now;
     this.t += dt;
+    this.frame++;
     var active = this.step(dt, now);
-    // At rest the only change is the shimmer, which reads fine at half rate.
-    this.odd = !this.odd;
-    if (active || this.odd) this.draw(active);
+    // At rest the only change is the shimmer, which reads fine at 20 frames
+    // a second.
+    if (active || this.frame % 3 === 0) this.draw();
     if (this.reduced() && !active) {
       this.last = 0;
       return;
@@ -685,19 +611,17 @@
       self.schedule();
     });
 
-    var lastW = c.clientWidth;
+    // Build once the canvas has a size, and again when its width changes. A
+    // phone's address bar changes only the height, which needs nothing.
     var timer = 0;
-    window.addEventListener('resize', function () {
+    var check = function () {
       clearTimeout(timer);
       timer = setTimeout(function () {
-        // A phone's address bar changes the height, not the width; only a
-        // new width needs the word cut again.
-        if (c.clientWidth === lastW) return;
-        lastW = c.clientWidth;
-        self.build(false);
-        self.schedule();
-      }, 150);
-    });
+        if (c.clientWidth && c.clientWidth !== self.builtW) self.build(!self.ready);
+      }, self.ready ? 150 : 0);
+    };
+    if ('ResizeObserver' in window) new ResizeObserver(check).observe(c);
+    window.addEventListener('resize', check);
   };
 
   window.OpenToolsGlitter = Glitter;
