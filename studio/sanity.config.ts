@@ -9,7 +9,8 @@ import {importTool} from './importTool'
 export default defineConfig({
   name: 'default',
   title: 'OpenTools',
-  basePath: '/studio',
+  // No basePath here: /studio is set once, in sanity.cli.ts. Setting it in
+  // both places joins them, and the studio ends up at /studio/studio.
   projectId: 'hha7i7up',
   dataset: 'production',
   plugins: [structureTool({structure}), importTool()],
