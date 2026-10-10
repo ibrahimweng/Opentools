@@ -71,8 +71,6 @@
     if (document.hidden) return false;
     var inModal = !!node.closest('.modal');
     if (modalOpen !== inModal) return false;
-    var card = node.closest('.card');
-    if (card && card.getAttribute('data-front') !== '1') return false;
     if (reduced.matches && node.classList.contains('pv')) return false;
     return true;
   }
@@ -147,199 +145,12 @@
     })
     .join('');
 
-  /* Spiral ---------------------------------------------------------------
-     Every tool as a card on a helix. The cards climb it and turn as they
-     go, fading out at the top as they come back in at the bottom. Hovering
-     slows it, dragging spins it, and clicking a card opens it. */
+  /* Hero -----------------------------------------------------------------
+     The name in glitter. It stops while a pop-up covers it. */
 
-  var spiral = $('[data-spiral]');
-  var stage = $('[data-spiral-stage]');
-  var label = $('[data-spiral-label]');
-  var N = tools.length;
-  var TURNS = 1.5;
-  var STEP = (360 * TURNS) / N; // degrees between neighbours
-  var SPEED = 1 / 3.2; // cards a second
-  var geo = { R: 200, dy: 50, perCard: 280 };
-  var t = N / 2; // the first tool starts facing the viewer
-  var v = reduced.matches ? 0 : SPEED;
-  var hovered = null;
-  var drag = null;
-  var dragged = false;
-  var spiralVisible = true;
-  var raf = 0;
-  var last = 0;
-
-  stage.innerHTML = tools
-    .map(function (tool, i) {
-      return (
-        '<button type="button" class="card" data-i="' + i + '" data-open="' + esc(tool.slug) + '" aria-label="Open ' + esc(tool.name) + '">' +
-        '<span class="card-face card-front"><span class="card-media">' + media(tool) + '</span><span class="card-shade"></span></span>' +
-        '<span class="card-face card-back"><span>' + esc(tool.name) + '</span></span>' +
-        '</button>'
-      );
-    })
-    .join('');
-  var cards = $$('.card', stage);
-  var shades = cards.map(function (c) {
-    return $('.card-shade', c);
-  });
-
-  // Sized to the space the reference gives its object: 420 px square, or
-  // about three quarters of a phone's width. The radius is kept wide enough
-  // that neighbouring cards never cut through one another.
-  function measure() {
-    var vw = document.documentElement.clientWidth;
-    var S = Math.min(420, vw * 0.733);
-    var k = (0.5 / Math.tan((STEP / 2) * (Math.PI / 180))) * 1.06;
-    var cw = Math.min(S * 0.6, (vw - 24) / (1 + 2 * k));
-    var ch = cw * 0.625;
-    geo.R = Math.min(Math.max(S * 0.5, k * cw), (vw - 24 - cw) / 2);
-    geo.dy = Math.min(S * 0.15, (spiral.clientHeight - ch - 40) / N);
-    geo.perCard = Math.max(120, geo.R * STEP * (Math.PI / 180));
-    spiral.style.setProperty('--cw', cw.toFixed(1) + 'px');
-    spiral.style.setProperty('--ch', ch.toFixed(1) + 'px');
-    spiral.style.setProperty('--persp', Math.round(S * 4.2) + 'px');
-  }
-
-  function place() {
-    for (var i = 0; i < N; i++) {
-      var s = (((i + t) % N) + N) % N;
-      var a = (s - N / 2) * STEP;
-      var y = (N / 2 - s) * geo.dy;
-      var facing = Math.cos(a * (Math.PI / 180));
-      var fade = Math.max(0, Math.min(1, Math.min(s, N - s) / 0.8));
-      var c = cards[i];
-      c.style.transform = 'translate3d(0,' + y.toFixed(2) + 'px,0) rotateY(' + a.toFixed(2) + 'deg) translateZ(' + geo.R.toFixed(1) + 'px)';
-      c.style.setProperty('--fade', fade.toFixed(3));
-      c.style.pointerEvents = fade < 0.35 ? 'none' : '';
-      shades[i].style.opacity = Math.min(0.75, (1 - facing) * 0.55).toFixed(3);
-      var front = facing > 0.05 && fade > 0.3 ? '1' : '0';
-      if (c.getAttribute('data-front') !== front) {
-        c.setAttribute('data-front', front);
-        $$('.pv, video', c).forEach(apply);
-      }
-    }
-  }
-
-  function frame(now) {
-    raf = 0;
-    var dt = last ? Math.min(0.05, (now - last) / 1000) : 0;
-    last = now;
-    if (!drag) {
-      var target = reduced.matches ? 0 : hovered !== null ? SPEED * 0.12 : SPEED;
-      // Ease back to cruising speed; a flick from a drag decays into it.
-      v += (target - v) * Math.min(1, dt * (Math.abs(v) > SPEED * 1.5 ? 1.6 : 3));
-      t += v * dt;
-    }
-    place();
-    if (reduced.matches && !drag && Math.abs(v) < 0.002) {
-      last = 0;
-      return;
-    }
-    run();
-  }
-
-  function run() {
-    if (raf || !spiralVisible || modalOpen || document.hidden) {
-      if (!raf) last = 0;
-      return;
-    }
-    raf = requestAnimationFrame(frame);
-  }
-
-  function showLabel(i) {
-    hovered = i;
-    if (i === null) {
-      label.classList.remove('is-on');
-      return;
-    }
-    $('[data-spiral-name]').textContent = tools[i].name;
-    $('[data-spiral-tag]').textContent = tools[i].tagline;
-    label.classList.add('is-on');
-  }
-
-  cards.forEach(function (c, i) {
-    c.addEventListener('pointerenter', function (e) {
-      if (e.pointerType !== 'touch') showLabel(i);
-    });
-    c.addEventListener('pointerleave', function () {
-      if (hovered === i) showLabel(null);
-    });
-    c.addEventListener('focus', function () {
-      showLabel(i);
-    });
-    c.addEventListener('blur', function () {
-      if (hovered === i) showLabel(null);
-    });
-  });
-
-  // Drag sideways to spin. Vertical moves are left to the page, so the
-  // spiral never traps a scroll on a phone.
-  spiral.addEventListener('pointerdown', function (e) {
-    if (e.button !== 0) return;
-    drag = { x: e.clientX, t: t, lastX: e.clientX, lastT: performance.now(), vel: 0, id: e.pointerId, moved: false };
-    dragged = false;
-  });
-
-  window.addEventListener('pointermove', function (e) {
-    if (!drag || e.pointerId !== drag.id) return;
-    var dx = e.clientX - drag.x;
-    if (!drag.moved && Math.abs(dx) > 6) {
-      drag.moved = true;
-      spiral.classList.add('is-dragging');
-    }
-    if (!drag.moved) return;
-    t = drag.t + dx / geo.perCard;
-    var now = performance.now();
-    var dts = Math.max(1, now - drag.lastT) / 1000;
-    drag.vel = ((e.clientX - drag.lastX) / geo.perCard) / dts;
-    drag.lastX = e.clientX;
-    drag.lastT = now;
-    if (!raf) place();
-  });
-
-  function endDrag(e) {
-    if (!drag || (e && e.pointerId !== drag.id)) return;
-    if (drag.moved) {
-      dragged = true;
-      v = Math.max(-4, Math.min(4, drag.vel));
-      spiral.classList.remove('is-dragging');
-    }
-    drag = null;
-    run();
-  }
-  window.addEventListener('pointerup', endDrag);
-  window.addEventListener('pointercancel', endDrag);
-
-  // A drag that ends over a card is not a click on it.
-  stage.addEventListener(
-    'click',
-    function (e) {
-      if (dragged) {
-        dragged = false;
-        e.preventDefault();
-        e.stopPropagation();
-      }
-    },
-    true
-  );
-
-  if (io) {
-    new IntersectionObserver(function (e) {
-      spiralVisible = e[0].isIntersecting;
-      run();
-    }).observe(spiral);
-  }
-  document.addEventListener('visibilitychange', run);
-  window.addEventListener('resize', function () {
-    measure();
-    place();
-  });
-
-  measure();
-  place();
-  track(stage);
-  run();
+  var glitterCanvas = $('[data-glitter]');
+  var glitter =
+    glitterCanvas && window.OpenToolsGlitter ? new window.OpenToolsGlitter(glitterCanvas, { text: site.name, reduced: reduced }) : null;
 
   /* Pop-up -------------------------------------------------------------- */
 
@@ -444,6 +255,7 @@
 
     returnFocus = document.activeElement;
     modalOpen = true;
+    if (glitter) glitter.pause();
     fill(i);
     if (!modal.open) modal.showModal();
     root.classList.add('is-locked');
@@ -490,7 +302,7 @@
       F.media.innerHTML = '';
       modalOpen = false;
       refresh();
-      run();
+      if (glitter) glitter.resume();
       if (returnFocus && returnFocus.focus && returnFocus.isConnected) {
         returnFocus.focus({ preventScroll: true });
       }

@@ -1,11 +1,11 @@
 /*
- * Opentools — site and tool data.
+ * OpenTools — site and tool data.
  *
  * This is the only file you need to edit to change what the site says.
  *
  *   url     The tool's live website. "Visit site" opens it in a new tab.
  *           Left empty, the button reads "Live link soon" and does nothing.
- *   video   A demo video for the tool's card on the spiral and its pop-up, e.g.
+ *   video   A demo video for the tool's pop-up, e.g.
  *           'media/typeforge.mp4'. Left empty, the tool's animated preview
  *           plays in its place. See media/README.md.
  *   poster  Optional still shown while the video loads, e.g.
@@ -13,11 +13,11 @@
  *   source  The public repository, shown as "Source" in the pop-up.
  *           Set it to '' to hide the link.
  *
- * Tools appear on the spiral and in the index in the order they are listed.
+ * Tools appear in the index, and step in the pop-up, in the order they are listed.
  */
 window.OPENTOOLS = {
   site: {
-    name: 'Opentools',
+    name: 'OpenTools',
     github: 'https://github.com/ibrahimweng',
   },
 

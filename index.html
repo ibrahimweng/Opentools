@@ -3,52 +3,47 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-  <title>Opentools</title>
-  <meta name="description" content="Opentools makes focused tools for designers: a font editor, an ideation board, 3D mockups, a parametric icon library, brand patterns, sound for video and brand handover.">
+  <title>OpenTools</title>
+  <meta name="description" content="OpenTools makes focused tools for designers: a font editor, an ideation board, 3D mockups, a parametric icon library, brand patterns, sound for video and brand handover.">
   <meta name="theme-color" content="#000000">
   <meta name="color-scheme" content="dark">
 
   <!-- Share previews. Once the domain is live, make og:image absolute,
        e.g. https://yourdomain.com/assets/og.png, and add a canonical link. -->
   <meta property="og:type" content="website">
-  <meta property="og:title" content="Opentools">
+  <meta property="og:title" content="OpenTools">
   <meta property="og:description" content="Focused tools for designers. Most of them run entirely in your browser.">
   <meta property="og:image" content="assets/og.png">
   <meta name="twitter:card" content="summary_large_image">
-  <meta name="twitter:title" content="Opentools">
+  <meta name="twitter:title" content="OpenTools">
   <meta name="twitter:description" content="Focused tools for designers. Most of them run entirely in your browser.">
   <meta name="twitter:image" content="assets/og.png">
 
   <link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500&display=swap">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;800&display=swap">
   <!-- Only the two letters the Typeforge preview sets. -->
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,100..900&text=Ag&display=block">
   <link rel="stylesheet" href="assets/css/site.css">
 
   <script defer src="assets/js/tools.js"></script>
   <script defer src="assets/js/previews.js"></script>
+  <script defer src="assets/js/glitter.js"></script>
   <script defer src="assets/js/site.js"></script>
 </head>
 <body>
   <a class="skip" href="#index">Skip to the list of tools</a>
 
   <main>
-    <!-- Every tool on a turning spiral. Drag to spin it, click a card to open it. -->
-    <section class="hero" aria-label="Tools">
-      <div class="spiral" data-spiral>
-        <div class="spiral-stage" data-spiral-stage></div>
-      </div>
-      <p class="spiral-label caption" data-spiral-label aria-hidden="true">
-        <span class="caption-name" data-spiral-name></span>
-        <span class="caption-tag" data-spiral-tag></span>
-      </p>
+    <!-- The name, written in glitter. Grab the word and drag it through the flakes. -->
+    <section class="hero" aria-label="OpenTools">
+      <canvas class="glitter" data-glitter role="img" aria-label="The word OpenTools, written as a gap in a field of silver glitter. Drag the word to move it."></canvas>
     </section>
 
     <div class="col">
       <section aria-labelledby="site-name">
-        <h1 class="label" id="site-name">Opentools</h1>
+        <h1 class="label" id="site-name">OpenTools</h1>
         <div class="indent">
           <p>makes focused tools for designers — type, ideas, mockups, icons, patterns, sound and brand handover. Free, <a href="https://github.com/ibrahimweng" target="_blank" rel="noopener" data-github>built in the open</a>, and most run in your browser.</p>
         </div>
