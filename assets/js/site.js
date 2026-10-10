@@ -133,17 +133,22 @@
   /* Index ---------------------------------------------------------------- */
 
   var index = $('[data-index]');
-  index.style.setProperty('--rows', Math.ceil(tools.length / 2));
-  index.innerHTML = tools
-    .map(function (t) {
-      return (
-        '<li><a class="person" href="#' + esc(t.slug) + '" data-open="' + esc(t.slug) + '">' +
-        '<span class="person-name">' + esc(t.name) + '</span>' +
-        '<span class="person-role">' + esc(t.category) + '</span>' +
-        '</a></li>'
-      );
-    })
-    .join('');
+
+  function renderIndex() {
+    index.style.setProperty('--rows', Math.ceil(tools.length / 2));
+    index.innerHTML = tools
+      .map(function (t) {
+        return (
+          '<li><a class="person" href="#' + esc(t.slug) + '" data-open="' + esc(t.slug) + '">' +
+          '<span class="person-name">' + esc(t.name) + '</span>' +
+          '<span class="person-role">' + esc(t.category) + '</span>' +
+          '</a></li>'
+        );
+      })
+      .join('');
+  }
+
+  renderIndex();
 
   /* Hero -----------------------------------------------------------------
      The name in glitter. It stops while a pop-up covers it. */
@@ -373,4 +378,69 @@
 
   // A link straight to a tool, such as /#typeforge, opens it.
   if (hashIndex() >= 0) open(hashIndex(), { push: false });
+
+  /* Content from the studio ----------------------------------------------
+     The tools are edited in Sanity, at /studio. The page shows the copy in
+     tools.js straight away and swaps in the studio's version when it
+     arrives. Until something is published there, or if Sanity cannot be
+     reached, the page keeps the copy in tools.js. */
+
+  var STUDIO_API = 'https://hha7i7up.apicdn.sanity.io/v2025-02-19/data/query/production';
+  var STUDIO_QUERY =
+    '*[_type == "tool" && !(_id in path("drafts.**")) && hidden != true && defined(slug.current)]' +
+    ' | order(orderRank asc){name, "slug": slug.current, tagline, category, url,' +
+    ' "video": video.asset->url, "poster": poster.asset->url, lead, description,' +
+    ' "features": features[]{title, description}, runs, stack, source}';
+
+  function fromStudio(d) {
+    return {
+      slug: d.slug,
+      name: d.name || '',
+      tagline: d.tagline || '',
+      category: d.category || '',
+      url: d.url || '',
+      video: d.video || '',
+      poster: d.poster || '',
+      source: d.source || '',
+      lead: d.lead || '',
+      // Paragraphs are separated by an empty line in the studio.
+      about: (d.description || '')
+        .split(/\n\s*\n/)
+        .map(function (p) {
+          return p.trim();
+        })
+        .filter(Boolean),
+      features: (d.features || []).map(function (f) {
+        return [f.title || '', f.description || ''];
+      }),
+      runs: d.runs || '',
+      stack: d.stack || '',
+    };
+  }
+
+  if (window.fetch) {
+    fetch(STUDIO_API + '?perspective=published&query=' + encodeURIComponent(STUDIO_QUERY))
+      .then(function (r) {
+        return r.ok ? r.json() : null;
+      })
+      .then(function (res) {
+        var list = res && res.result;
+        if (!list || !list.length) return;
+        var showing = modal.open && current >= 0 ? tools[current] : null;
+        tools = list.map(fromStudio);
+        renderIndex();
+        if (showing) {
+          // A pop-up opened before the studio answered: keep it on the same
+          // tool, and refresh it only if the studio says something different.
+          var j = indexOf(showing.slug);
+          if (j < 0) close();
+          else if (JSON.stringify(tools[j]) !== JSON.stringify(showing)) fill(j);
+          else current = j;
+        } else if (hashIndex() >= 0) {
+          // A link to a tool that only the studio knows about.
+          open(hashIndex(), { push: false });
+        }
+      })
+      .catch(function () {});
+  }
 })();

@@ -1,7 +1,9 @@
 /*
- * OpenTools — site and tool data.
+ * OpenTools — the starting copy.
  *
- * This is the only file you need to edit to change what the site says.
+ * The tools are edited in the studio at /studio. This file is what the site
+ * shows until the studio has published tools, and whenever Sanity cannot be
+ * reached, and it is what the studio's Import button copies in.
  *
  *   url     The tool's live website. "Visit site" opens it in a new tab.
  *           Left empty, the button reads "Live link soon" and does nothing.

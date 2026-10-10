@@ -1,0 +1,8 @@
+{
+  "name": "opentools",
+  "private": true,
+  "description": "The OpenTools site, with its editing studio at /studio.",
+  "scripts": {
+    "build": "node scripts/build.mjs"
+  }
+}

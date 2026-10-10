@@ -1,0 +1,345 @@
+{
+  "tools": [
+    {
+      "name": "Typeforge",
+      "slug": {
+        "_type": "slug",
+        "current": "typeforge"
+      },
+      "tagline": "A font editor that runs in the browser.",
+      "category": "Type",
+      "lead": "Open a typeface, reshape it, export a real font.",
+      "description": "Typeforge reads .ttf, .otf, .woff and .woff2 files and writes a valid TrueType or OpenType file back out, with its kerning and spacing intact.\n\nIt can also draw a family from nothing. Letters are built from a skeleton swept by a pen, so weight is an input to the drawing rather than a shove applied to a finished outline.",
+      "features": [
+        {
+          "_key": "glyphview0",
+          "_type": "feature",
+          "title": "Glyph view",
+          "description": "Direct outline editing with bezier nodes, handles and a pen tool."
+        },
+        {
+          "_key": "kerning1",
+          "_type": "feature",
+          "title": "Kerning",
+          "description": "Click the gap between two letters and drag. Pairs and classes."
+        },
+        {
+          "_key": "parameters2",
+          "_type": "feature",
+          "title": "Parameters",
+          "description": "Weight, width, slant, x-height and corner radius across the whole face."
+        },
+        {
+          "_key": "build3",
+          "_type": "feature",
+          "title": "Build",
+          "description": "Accented letters assembled from their parts, read from Unicode itself."
+        },
+        {
+          "_key": "draw4",
+          "_type": "feature",
+          "title": "Draw",
+          "description": "452 glyphs across Latin, Greek and Cyrillic, in nine weights."
+        },
+        {
+          "_key": "export5",
+          "_type": "feature",
+          "title": "Export",
+          "description": "TrueType, OpenType, or one variable font with a weight axis."
+        }
+      ],
+      "runs": "In your browser. Fonts are never uploaded.",
+      "stack": "React, TypeScript, opentype.js, Paper.js",
+      "hidden": false,
+      "source": "https://github.com/ibrahimweng/typeforge"
+    },
+    {
+      "name": "Ideation Board",
+      "slug": {
+        "_type": "slug",
+        "current": "ideation-board"
+      },
+      "tagline": "A board where you drop ideas and work on them.",
+      "category": "Ideas",
+      "lead": "Images, video, sound, 3D models, notes and links on one canvas.",
+      "description": "Drop anything onto the board and work on it where it lies: put effects on anything with pixels, run a sound through effects of its own, make a depth map of a photograph, or ask for twelve versions of a card and keep the ones worth keeping.\n\nGroup cards into sections, draw connections between them, and put a board inside a board when one canvas is no longer enough.",
+      "features": [
+        {
+          "_key": "dropanythi0",
+          "_type": "feature",
+          "title": "Drop anything",
+          "description": "Images, video, audio, 3D models, notes, links and files."
+        },
+        {
+          "_key": "effects1",
+          "_type": "feature",
+          "title": "Effects",
+          "description": "GPU effects for pictures and video, and effects of their own for sound."
+        },
+        {
+          "_key": "depthmaps2",
+          "_type": "feature",
+          "title": "Depth maps",
+          "description": "Read the depth of a photograph and push other pictures around with it."
+        },
+        {
+          "_key": "twelvevers3",
+          "_type": "feature",
+          "title": "Twelve versions",
+          "description": "Ask for variations of anything and keep the best."
+        },
+        {
+          "_key": "sections4",
+          "_type": "feature",
+          "title": "Sections",
+          "description": "Group, label and connect cards. Nest boards inside boards."
+        },
+        {
+          "_key": "export5",
+          "_type": "feature",
+          "title": "Export",
+          "description": "Take any of it out as a full-resolution picture."
+        }
+      ],
+      "runs": "In your browser. Boards are kept on your machine, with no account.",
+      "stack": "React, TypeScript, three.js",
+      "hidden": false,
+      "source": "https://github.com/ibrahimweng/Ideation-board"
+    },
+    {
+      "name": "Mockup Studio",
+      "slug": {
+        "_type": "slug",
+        "current": "mockup-studio"
+      },
+      "tagline": "Photoreal mockups, rendered in your browser.",
+      "category": "3D",
+      "lead": "Drop in a screenshot. Get a studio shot back.",
+      "description": "Mockup Studio puts your screenshot on a device’s display, lit by a captured photography studio, or prints it onto merchandise. Drag to turn the device, pick a focal length and a backdrop, and export the frame.\n\nKeyframe the device or the camera and export a short video. The screenshot is never uploaded, and there is no account or API key.",
+      "features": [
+        {
+          "_key": "devices0",
+          "_type": "feature",
+          "title": "Devices",
+          "description": "iPhone, MacBook, iMac, Mac Studio and Apple Watch Ultra."
+        },
+        {
+          "_key": "merchandis1",
+          "_type": "feature",
+          "title": "Merchandise",
+          "description": "T-shirt, tote bag, water bottle, ID card and clipboard."
+        },
+        {
+          "_key": "lighting2",
+          "_type": "feature",
+          "title": "Lighting",
+          "description": "Image-based light from real photography studios."
+        },
+        {
+          "_key": "animation3",
+          "_type": "feature",
+          "title": "Animation",
+          "description": "Keyframes, and a turntable preset that loops cleanly."
+        },
+        {
+          "_key": "export4",
+          "_type": "feature",
+          "title": "Export",
+          "description": "Stills and video, made in the browser."
+        }
+      ],
+      "runs": "In your browser, in a window at least 720 px wide.",
+      "stack": "React, TypeScript, three.js",
+      "hidden": false,
+      "source": "https://github.com/ibrahimweng/3d-mockup-project"
+    },
+    {
+      "name": "Glyphs",
+      "slug": {
+        "_type": "slug",
+        "current": "glyphs"
+      },
+      "tagline": "A parametric icon library and editor.",
+      "category": "Icons",
+      "lead": "Thousands of icons, redrawn at once by a few sliders.",
+      "description": "Every icon is drawn on a 24 grid with every radius and gap measured in stroke units, so changing the stroke or the corners re-derives the whole library at once.\n\nFour styles, each with rounded or sharp corners. Export one icon, a sprite, an icon font, or a whole category as a ZIP.",
+      "features": [
+        {
+          "_key": "fourstyles0",
+          "_type": "feature",
+          "title": "Four styles",
+          "description": "Stroke, two-tone, duotone and fill."
+        },
+        {
+          "_key": "corners1",
+          "_type": "feature",
+          "title": "Corners",
+          "description": "Rounded or sharp, applied across every icon."
+        },
+        {
+          "_key": "stroke2",
+          "_type": "feature",
+          "title": "Stroke",
+          "description": "From 1 to 4 on the 24 grid, previewed from 16 to 48 px."
+        },
+        {
+          "_key": "library3",
+          "_type": "feature",
+          "title": "Library",
+          "description": "1,366 icons in all eight versions, and a core set of 1,854."
+        },
+        {
+          "_key": "export4",
+          "_type": "feature",
+          "title": "Export",
+          "description": "SVG, sprite, icon font, JSON and per-category ZIPs."
+        }
+      ],
+      "runs": "In your browser. A static site with no server code.",
+      "stack": "JavaScript, Clipper, opentype.js",
+      "hidden": false,
+      "source": "https://github.com/ibrahimweng/beetle-wallet/tree/main/glyphs"
+    },
+    {
+      "name": "Pattern Gen",
+      "slug": {
+        "_type": "slug",
+        "current": "pattern-gen"
+      },
+      "tagline": "Turns a logo into a system of brand patterns.",
+      "category": "Patterns",
+      "lead": "Patterns measured from the mark, not laid over it.",
+      "description": "Pattern Gen reads an SVG mark and works out what makes it recognisable — its colours, its angles, its symmetry, the unit it is drawn on — then builds patterns from those findings rather than from generic decoration.\n\nEvery pattern is measured before it is offered, and each one comes with a written report on where it belongs and where it does not.",
+      "features": [
+        {
+          "_key": "fourfamili0",
+          "_type": "feature",
+          "title": "Four families",
+          "description": "Shape, gradient, pixel and dimensional. Twenty-five ideas."
+        },
+        {
+          "_key": "measured1",
+          "_type": "feature",
+          "title": "Measured",
+          "description": "Seams, range and survival at small sizes, checked first."
+        },
+        {
+          "_key": "reports2",
+          "_type": "feature",
+          "title": "Reports",
+          "description": "A written case for every pattern, with what was measured."
+        },
+        {
+          "_key": "studio3",
+          "_type": "feature",
+          "title": "Studio",
+          "description": "Tune density and colour, reroll, and watch the loop play."
+        },
+        {
+          "_key": "export4",
+          "_type": "feature",
+          "title": "Export",
+          "description": "SVG tile, PNG proofs, CSS, a React component and a Lottie loop."
+        }
+      ],
+      "runs": "In your browser, or from the command line.",
+      "stack": "TypeScript, React",
+      "hidden": false,
+      "source": "https://github.com/ibrahimweng/Pattern-Gen"
+    },
+    {
+      "name": "Beat Studio",
+      "slug": {
+        "_type": "slug",
+        "current": "beat-studio"
+      },
+      "tagline": "Sound design for video, in the browser.",
+      "category": "Sound",
+      "lead": "It reads your clip and says what belongs on each moment.",
+      "description": "Load a clip and Beat Studio finds the moments in it that want a sound, then suggests what belongs on each. Place sounds from a library filed by the moment they serve, and export a file that lines up when you drop it back into your editor.\n\nA second screen takes a recording apart: drop in a beat and it comes back as the drums, the bass, whatever is in front and everything else, each one a layer of its own.",
+      "features": [
+        {
+          "_key": "readsthepi0",
+          "_type": "feature",
+          "title": "Reads the picture",
+          "description": "Finds the hits in a clip and suggests sounds for each."
+        },
+        {
+          "_key": "library1",
+          "_type": "feature",
+          "title": "Library",
+          "description": "Filed by what a sound does on screen, not what made it."
+        },
+        {
+          "_key": "stems2",
+          "_type": "feature",
+          "title": "Stems",
+          "description": "Split a recording into parts, then split those again."
+        },
+        {
+          "_key": "synthesise3",
+          "_type": "feature",
+          "title": "Synthesised",
+          "description": "Every sound is made with the Web Audio API."
+        },
+        {
+          "_key": "export4",
+          "_type": "feature",
+          "title": "Export",
+          "description": "WAV, MP3, MIDI and a marker list, at 24 bits and 48k."
+        }
+      ],
+      "runs": "In your browser. Clips never leave your machine.",
+      "stack": "TypeScript, Web Audio API",
+      "hidden": false,
+      "source": "https://github.com/ibrahimweng/beat-studio"
+    },
+    {
+      "name": "Brand Handover",
+      "slug": {
+        "_type": "slug",
+        "current": "brand-handover"
+      },
+      "tagline": "One approved mark in, a whole brand package out.",
+      "category": "Brand",
+      "lead": "Change the mark, and every document changes with it.",
+      "description": "Upload the approved mark once and Brand Handover derives everything downstream of it: lockups in every colourway, icons, favicons, social crops, the brand pattern, the guidelines manual, the client deck and the delivery package.\n\nNone of the documents holds a copy of the mark, so a late revision costs a rebuild rather than a week of remaking files by hand.",
+      "features": [
+        {
+          "_key": "readsthema0",
+          "_type": "feature",
+          "title": "Reads the mark",
+          "description": "Ink box, clear space and minimum sizes, measured from the file."
+        },
+        {
+          "_key": "manualandd1",
+          "_type": "feature",
+          "title": "Manual and deck",
+          "description": "Guidelines and a client presentation, built together."
+        },
+        {
+          "_key": "files2",
+          "_type": "feature",
+          "title": "Files",
+          "description": "SVG, PDF, .ai and PNG for every lockup in every colourway."
+        },
+        {
+          "_key": "canvas3",
+          "_type": "feature",
+          "title": "Canvas",
+          "description": "Arrange blocks and place photographs; drawn blocks stay true."
+        },
+        {
+          "_key": "delivery4",
+          "_type": "feature",
+          "title": "Delivery",
+          "description": "Around 150 files, packaged as one zip."
+        }
+      ],
+      "runs": "Hosted, or on your own machine, where nothing is uploaded.",
+      "stack": "Node, resvg, headless Chrome",
+      "hidden": false,
+      "source": "https://github.com/ibrahimweng/Brand-Handover"
+    }
+  ]
+}

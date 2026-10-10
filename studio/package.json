@@ -1,0 +1,21 @@
+{
+  "name": "opentools-studio",
+  "private": true,
+  "version": "1.0.0",
+  "description": "The editing studio for OpenTools, served at /studio.",
+  "scripts": {
+    "dev": "sanity dev",
+    "build": "sanity build"
+  },
+  "dependencies": {
+    "@sanity/orderable-document-list": "2.0.20",
+    "lexorank": "^1.0.5",
+    "react": "19.2.8",
+    "react-dom": "19.2.8",
+    "sanity": "^6.8.0",
+    "styled-components": "^6.4.4"
+  },
+  "devDependencies": {
+    "typescript": "^5.9.3"
+  }
+}
