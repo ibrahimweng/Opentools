@@ -15,10 +15,10 @@ function DownloadIcon() {
 
 type SeedTool = {slug: {current: string}; name: string; [key: string]: unknown}
 
-// Copies the seven tools the site already describes into Sanity, so the
-// studio starts filled in rather than empty. Uses the signed-in editor's own
-// access, so no key is needed. Safe to press twice: a tool that is already
-// here is left exactly as it is.
+// Copies the site's title and bio and the seven tools it already describes
+// into Sanity, so the studio starts filled in rather than empty. Uses the
+// signed-in editor's own access, so no key is needed. Safe to press twice:
+// anything already here is left exactly as it is.
 function ImportTool() {
   const client = useClient({apiVersion: '2025-02-19'})
   const [have, setHave] = useState<string[] | null>(null)
@@ -28,7 +28,7 @@ function ImportTool() {
 
   const load = () =>
     client
-      .fetch<string[]>('*[_type == "tool" && !(_id in path("drafts.**"))]._id')
+      .fetch<string[]>('*[(_type == "tool" || _id == "siteSettings") && !(_id in path("drafts.**"))]._id')
       .then(setHave)
       .catch(() => setHave([]))
 
@@ -37,6 +37,10 @@ function ImportTool() {
   }, [client])
 
   const missing = have === null ? [] : tools.filter((t) => !have.includes(`tool-${t.slug.current}`))
+  const needSettings = have !== null && !have.includes('siteSettings')
+  const todo = [...(needSettings ? ['the title and bio'] : []), ...missing.map((t) => t.name)]
+  const count = `${missing.length} ${missing.length === 1 ? 'tool' : 'tools'}`
+  const label = !needSettings ? count : missing.length ? `the title, bio and ${count}` : 'the title and bio'
 
   async function run() {
     setState('working')
@@ -48,6 +52,7 @@ function ImportTool() {
       )
       let rank = last ? LexoRank.parse(last).genNext() : LexoRank.middle()
       const tx = client.transaction()
+      if (needSettings) tx.createIfNotExists({...seed.settings, _id: 'siteSettings', _type: 'siteSettings'})
       for (const t of missing) {
         tx.createIfNotExists({...t, _id: `tool-${t.slug.current}`, _type: 'tool', orderRank: rank.toString()})
         rank = rank.genNext()
@@ -63,35 +68,34 @@ function ImportTool() {
 
   return (
     <Container width={1} padding={5}>
-      <Stack space={5}>
-        <Heading size={3}>Import the tools</Heading>
+      <Stack gap={5}>
+        <Heading size={3}>Import the site</Heading>
         <Text muted>
-          Copies the {tools.length} tools on the site today, with their names, taglines, descriptions, features and
-          GitHub links, into the studio. After that, everything is edited in Tools.
+          Copies the site’s title and bio, and the {tools.length} tools on it today with their names, taglines,
+          descriptions, features and GitHub links, into the studio. After that, everything is edited in Site settings
+          and Tools.
         </Text>
-        <Card padding={4} radius={3} border tone={missing.length ? 'primary' : 'positive'}>
-          <Stack space={4}>
+        <Card padding={4} radius={3} border tone={todo.length ? 'primary' : 'positive'}>
+          <Stack gap={4}>
             {have === null ? (
               <Text>Checking what is already here…</Text>
-            ) : missing.length ? (
-              <Text>
-                {missing.length} of {tools.length} still to import: {missing.map((t) => t.name).join(', ')}.
-              </Text>
+            ) : todo.length ? (
+              <Text>Still to import: {todo.join(', ')}.</Text>
             ) : (
-              <Text>All {tools.length} tools are in the studio. Open Tools to edit them.</Text>
+              <Text>Everything is in the studio. Edit it in Site settings and Tools.</Text>
             )}
-            {missing.length > 0 && (
+            {todo.length > 0 && (
               <Box>
                 <Button
                   icon={DownloadIcon}
-                  text={state === 'working' ? 'Importing…' : `Import ${missing.length} tools`}
+                  text={state === 'working' ? 'Importing…' : `Import ${label}`}
                   tone="primary"
                   disabled={state === 'working'}
                   onClick={run}
                 />
               </Box>
             )}
-            {state === 'done' && !missing.length && <Text>Done. Every tool is published and on the site.</Text>}
+            {state === 'done' && !todo.length && <Text>Done. It is all published and on the site.</Text>}
             {state === 'error' && <Text>Something went wrong: {error}</Text>}
           </Stack>
         </Card>

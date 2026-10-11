@@ -380,17 +380,70 @@
   if (hashIndex() >= 0) open(hashIndex(), { push: false });
 
   /* Content from the studio ----------------------------------------------
-     The tools are edited in Sanity, at /studio. The page shows the copy in
-     tools.js straight away and swaps in the studio's version when it
-     arrives. Until something is published there, or if Sanity cannot be
-     reached, the page keeps the copy in tools.js. */
+     The title, bio and tools are edited in Sanity, at /studio. The page shows
+     the copy in index.html and tools.js straight away and swaps in the
+     studio's version when it arrives. Until something is published there,
+     or if Sanity cannot be reached, the page keeps its own copy. */
 
   var STUDIO_API = 'https://hha7i7up.apicdn.sanity.io/v2025-02-19/data/query/production';
   var STUDIO_QUERY =
-    '*[_type == "tool" && !(_id in path("drafts.**")) && hidden != true && defined(slug.current)]' +
+    '{"tools": *[_type == "tool" && !(_id in path("drafts.**")) && hidden != true && defined(slug.current)]' +
     ' | order(orderRank asc){name, "slug": slug.current, tagline, category, url,' +
     ' "video": video.asset->url, "poster": poster.asset->url, lead, description,' +
-    ' "features": features[]{title, description}, runs, stack, source}';
+    ' "features": features[]{title, description}, runs, stack, source},' +
+    ' "settings": *[_id == "siteSettings"][0]{title, bio}}';
+
+  // The bio arrives as paragraphs of text runs, some of them links.
+  function safeHref(href) {
+    return /^(https?:|mailto:)/i.test(href || '') ? href : '';
+  }
+
+  function bioHTML(blocks) {
+    return (blocks || [])
+      .map(function (b) {
+        if (!b || b._type !== 'block') return '';
+        var links = {};
+        (b.markDefs || []).forEach(function (d) {
+          if (d && d._type === 'link') links[d._key] = safeHref(d.href);
+        });
+        var html = (b.children || [])
+          .map(function (span) {
+            var out = esc(span.text).replace(/\n/g, '<br>');
+            (span.marks || []).forEach(function (m) {
+              if (!links[m]) return;
+              var external = !/^mailto:/i.test(links[m]);
+              out =
+                '<a href="' + esc(links[m]) + '"' + (external ? ' target="_blank" rel="noopener"' : '') + '>' + out + '</a>';
+            });
+            return out;
+          })
+          .join('');
+        return /\S/.test(html) ? '<p>' + html + '</p>' : '';
+      })
+      .join('');
+  }
+
+  var siteName = $('#site-name');
+  var bio = $('[data-bio]');
+  var hero = $('.hero');
+
+  function applySettings(s) {
+    var title = String(s.title || '').trim();
+    if (title) {
+      siteName.textContent = title;
+      document.title = title;
+      if (hero) hero.setAttribute('aria-label', title);
+      if (glitterCanvas) {
+        glitterCanvas.setAttribute(
+          'aria-label',
+          'The word ' + title + ', written as a gap in a field of silver glitter. Drag the word to move it.'
+        );
+      }
+      if (glitter) glitter.setText(title);
+    }
+    var html = bioHTML(s.bio);
+    if (html) bio.innerHTML = html;
+  }
 
   function fromStudio(d) {
     return {
@@ -424,7 +477,10 @@
         return r.ok ? r.json() : null;
       })
       .then(function (res) {
-        var list = res && res.result;
+        var r = res && res.result;
+        if (!r) return;
+        if (r.settings) applySettings(r.settings);
+        var list = r.tools;
         if (!list || !list.length) return;
         var showing = modal.open && current >= 0 ? tools[current] : null;
         tools = list.map(fromStudio);

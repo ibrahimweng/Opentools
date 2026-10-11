@@ -10,13 +10,17 @@ the tool is, what it does, and a video of it in use. From there
 you can step to the next tool or the previous one, or press **Visit site** to
 open the tool itself in a new tab.
 
-The page is plain HTML, CSS and JavaScript. The tools are edited in a Sanity
-studio that lives on the same site, at **https://www.opentools.art/studio**.
+The page is plain HTML, CSS and JavaScript. Its words and tools are edited in
+a Sanity studio that lives on the same site, at
+**https://www.opentools.art/studio**.
 
-## Editing the tools
+## Editing the site
 
 Open **/studio** and sign in with the Sanity account that owns the project.
 
+- **Site settings** holds the **Title**, written in glitter at the top of the
+  page and as the heading beside the bio, and the **Bio**. To link words in
+  the bio, select them and press the link button.
 - **Tools** lists every tool in the order the site shows them. Drag a row to
   move it.
 - Open a tool to change its name, tagline, category, **Tool link** (where
@@ -26,8 +30,8 @@ Open **/studio** and sign in with the Sanity account that owns the project.
 - To add a tool, press the **+** at the top of the Tools list.
 
 The first time, open **Import** in the studio's top bar and press the button.
-It copies the seven tools the site already describes into the studio. Pressing
-it again does nothing to tools that are already there.
+It copies the title, the bio and the seven tools the site already describes
+into the studio. Pressing it again leaves anything already there as it is.
 
 | Field | What it is |
 | --- | --- |
@@ -42,11 +46,26 @@ it again does nothing to tools that are already there.
 Videos play muted on a loop. MP4, 10–30 seconds and under about 8 MB keeps the
 pop-up quick to open.
 
+### Adding a tool at its own address
+
+Each tool lives at its own address, such as `typeforge.opentools.art`. Once,
+at Namecheap (Domain List → opentools.art → Advanced DNS), add a CNAME record
+with host `*` and value `cname.vercel-dns.com`. Every `something.opentools.art`
+then reaches Vercel, so no tool needs its own record there.
+
+For each new tool:
+
+1. In the tool's own Vercel project, open **Settings → Domains** and add
+   `name.opentools.art`.
+2. In the studio, press **+** in Tools, fill it in with
+   `https://name.opentools.art` as its **Tool link**, and publish. It appears
+   in the index within about a minute.
+
 ### When the studio has nothing
 
-`assets/js/tools.js` holds the copy the site shows until the studio has
-published tools, and whenever Sanity cannot be reached. It is also what
-**Import** copies in. Once the tools are in the studio, edit them there.
+`index.html` and `assets/js/tools.js` hold the copy the site shows until the
+studio has published its own, and whenever Sanity cannot be reached. They are
+also what **Import** copies in. Once it is in the studio, edit it there.
 
 A tool added in the studio shows its video, or a plain frame without one. The
 seven tools above also have an animated preview each, drawn in

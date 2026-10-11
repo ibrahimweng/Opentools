@@ -1,6 +1,7 @@
 import {defineConfig} from 'sanity'
 import {structureTool} from 'sanity/structure'
 import {tool} from './schemaTypes/tool'
+import {siteSettings} from './schemaTypes/siteSettings'
 import {structure} from './structure'
 import {importTool} from './importTool'
 
@@ -14,10 +15,18 @@ export default defineConfig({
   projectId: 'hha7i7up',
   dataset: 'production',
   plugins: [structureTool({structure}), importTool()],
-  schema: {types: [tool]},
+  schema: {types: [siteSettings, tool]},
   document: {
     // A tool is created from the Tools list, which places it in order; the
-    // global "Create" menu would skip that.
-    newDocumentOptions: (prev) => prev.filter((item) => item.templateId !== 'tool'),
+    // global "Create" menu would skip that. Site settings is one document,
+    // opened from its own item.
+    newDocumentOptions: (prev) =>
+      prev.filter((item) => item.templateId !== 'tool' && item.templateId !== 'siteSettings'),
+    // Site settings can be edited and published, but not copied, taken down
+    // or deleted.
+    actions: (prev, {schemaType}) =>
+      schemaType === 'siteSettings'
+        ? prev.filter(({action}) => action !== 'duplicate' && action !== 'unpublish' && action !== 'delete')
+        : prev,
   },
 })

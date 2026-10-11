@@ -1,4 +1,62 @@
 {
+  "settings": {
+    "title": "OpenTools",
+    "bio": [
+      {
+        "_type": "block",
+        "_key": "bio",
+        "style": "normal",
+        "markDefs": [
+          {
+            "_type": "link",
+            "_key": "portfolio",
+            "href": "https://weng.ink"
+          },
+          {
+            "_type": "link",
+            "_key": "github",
+            "href": "https://github.com/ibrahimweng"
+          }
+        ],
+        "children": [
+          {
+            "_type": "span",
+            "_key": "s1",
+            "text": "makes focused tools for designers — type, ideas, mockups, icons, patterns, sound and brand handover. Built by ",
+            "marks": []
+          },
+          {
+            "_type": "span",
+            "_key": "s2",
+            "text": "Weng Ibrahim",
+            "marks": [
+              "portfolio"
+            ]
+          },
+          {
+            "_type": "span",
+            "_key": "s3",
+            "text": ", free and ",
+            "marks": []
+          },
+          {
+            "_type": "span",
+            "_key": "s4",
+            "text": "in the open",
+            "marks": [
+              "github"
+            ]
+          },
+          {
+            "_type": "span",
+            "_key": "s5",
+            "text": "; most run in your browser.",
+            "marks": []
+          }
+        ]
+      }
+    ]
+  },
   "tools": [
     {
       "name": "Typeforge",

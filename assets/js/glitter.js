@@ -137,10 +137,13 @@
     c.width = Math.round(W * dpr);
     c.height = Math.round(H * dpr);
 
-    // On a narrow screen the word stacks, so the letters stay big enough to
-    // read as gaps.
+    // On a narrow screen the word stacks, at its first space or else where a
+    // capital starts a new word, so the letters stay big enough to read as
+    // gaps.
     var narrow = W < 640;
-    var lines = narrow ? this.text.replace(/([a-z])([A-Z])/, '$1\n$2').split('\n') : [this.text];
+    var lines = narrow
+      ? (/\s/.test(this.text) ? this.text.replace(/\s+/, '\n') : this.text.replace(/([a-z])([A-Z])/, '$1\n$2')).split('\n')
+      : [this.text];
 
     var setFont = function (ctx, size) {
       ctx.font = WEIGHT + ' ' + size + 'px ' + FAMILY;
@@ -522,6 +525,14 @@
       return;
     }
     this.raf = requestAnimationFrame(this.loop);
+  };
+
+  // Write a different word, as when the studio renames the site.
+  Glitter.prototype.setText = function (text) {
+    text = String(text || '').trim();
+    if (!text || text === this.text) return;
+    this.text = text;
+    this.build(true);
   };
 
   Glitter.prototype.pause = function () {
